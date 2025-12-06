@@ -40,4 +40,24 @@ public interface IUnitOfWork : IDisposable
     /// Rolls back the current transaction.
     /// </summary>
     void Rollback();
+
+    /// <summary>
+    /// Saves all changes to the database asynchronously.
+    /// </summary>
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Begins a new transaction asynchronously.
+    /// </summary>
+    Task BeginTransactionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Commits the current transaction asynchronously.
+    /// </summary>
+    Task CommitAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Rolls back the current transaction asynchronously.
+    /// </summary>
+    Task RollbackAsync(CancellationToken cancellationToken = default);
 }

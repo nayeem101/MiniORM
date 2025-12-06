@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using MiniORM.Core.Connection;
 
 namespace MiniORM.Core;
@@ -184,6 +185,165 @@ public class DbContext : IDisposable
 
         return command.ExecuteReader();
     }
+
+    #region Asynchronous Methods
+
+    /// <summary>
+    /// Gets or creates the current connection asynchronously.
+    /// </summary>
+    public async Task<DbConnection> GetConnectionAsync(CancellationToken cancellationToken = default)
+    {
+        if (_connection == null)
+        {
+            // We cast because CreateConnectionAsync returns DbConnection
+            _connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
+        }
+
+        if (_connection.State != ConnectionState.Open)
+        {
+            if (_connection is DbConnection dbConnection)
+            {
+                await dbConnection.OpenAsync(cancellationToken);
+            }
+            else
+            {
+                _connection.Open();
+            }
+        }
+
+        return (DbConnection)_connection;
+    }
+
+    /// <summary>
+    /// Creates a new command associated with the current connection and transaction.
+    /// </summary>
+    public async Task<DbCommand> CreateCommandAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = await GetConnectionAsync(cancellationToken);
+        var command = connection.CreateCommand();
+        command.Transaction = (DbTransaction?)_transaction;
+        return command;
+    }
+
+    /// <summary>
+    /// Executes a non-query SQL command asynchronously.
+    /// </summary>
+    public async Task<int> ExecuteNonQueryAsync(string sql, params (string name, object? value)[] parameters)
+    {
+        using var command = await CreateCommandAsync();
+        command.CommandText = sql;
+
+        foreach (var (name, value) in parameters)
+        {
+            var param = command.CreateParameter();
+            param.ParameterName = name;
+            param.Value = value ?? DBNull.Value;
+            command.Parameters.Add(param);
+        }
+
+        return await command.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Executes a scalar SQL command asynchronously.
+    /// </summary>
+    public async Task<object?> ExecuteScalarAsync(string sql, params (string name, object? value)[] parameters)
+    {
+        using var command = await CreateCommandAsync();
+        command.CommandText = sql;
+
+        foreach (var (name, value) in parameters)
+        {
+            var param = command.CreateParameter();
+            param.ParameterName = name;
+            param.Value = value ?? DBNull.Value;
+            command.Parameters.Add(param);
+        }
+
+        return await command.ExecuteScalarAsync();
+    }
+
+    /// <summary>
+    /// Begins a new transaction asynchronously.
+    /// </summary>
+    public async Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default)
+    {
+        if (_transaction != null)
+        {
+            throw new InvalidOperationException("A transaction is already in progress.");
+        }
+
+        var connection = await GetConnectionAsync(cancellationToken);
+        _transaction = await connection.BeginTransactionAsync(isolationLevel, cancellationToken);
+        return (DbTransaction)_transaction;
+    }
+
+    /// <summary>
+    /// Commits the current transaction asynchronously.
+    /// </summary>
+    public async Task CommitAsync(CancellationToken cancellationToken = default)
+    {
+        if (_transaction == null)
+        {
+            throw new InvalidOperationException("No transaction is in progress.");
+        }
+
+        if (_transaction is DbTransaction dbTransaction)
+        {
+            await dbTransaction.CommitAsync(cancellationToken);
+        }
+        else
+        {
+            _transaction.Commit();
+        }
+
+        _transaction.Dispose();
+        _transaction = null;
+    }
+
+    /// <summary>
+    /// Rolls back the current transaction asynchronously.
+    /// </summary>
+    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    {
+        if (_transaction == null)
+        {
+            throw new InvalidOperationException("No transaction is in progress.");
+        }
+
+        if (_transaction is DbTransaction dbTransaction)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+        }
+        else
+        {
+            _transaction.Rollback();
+        }
+
+        _transaction.Dispose();
+        _transaction = null;
+    }
+
+    /// <summary>
+    /// Executes a query and returns a data reader asynchronously.
+    /// </summary>
+    public async Task<DbDataReader> ExecuteReaderAsync(string sql, params (string name, object? value)[] parameters)
+    {
+        var command = await CreateCommandAsync();
+        command.CommandText = sql;
+
+        foreach (var (name, value) in parameters)
+        {
+            var param = command.CreateParameter();
+            param.ParameterName = name;
+            param.Value = value ?? DBNull.Value;
+            command.Parameters.Add(param);
+        }
+
+        return await command.ExecuteReaderAsync();
+    }
+
+    #endregion
 
     /// <summary>
     /// Disposes resources.

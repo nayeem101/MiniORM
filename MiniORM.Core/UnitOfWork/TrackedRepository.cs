@@ -105,4 +105,93 @@ public class TrackedRepository<TEntity> : Repository<TEntity>, IRepository<TEnti
             Delete(entity);
         }
     }
+
+    public override async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await base.GetByIdAsync(id, cancellationToken);
+        if (entity != null)
+        {
+            _changeTracker.Track(entity, EntityState.Unchanged);
+        }
+        return entity;
+    }
+
+    public override async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var entities = (await base.GetAllAsync(cancellationToken)).ToList();
+        foreach (var entity in entities)
+        {
+            _changeTracker.Track(entity, EntityState.Unchanged);
+        }
+        return entities;
+    }
+
+    public override async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var entities = (await base.FindAsync(predicate, cancellationToken)).ToList();
+        foreach (var entity in entities)
+        {
+            _changeTracker.Track(entity, EntityState.Unchanged);
+        }
+        return entities;
+    }
+
+    public override async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var entity = await base.FirstOrDefaultAsync(predicate, cancellationToken);
+        if (entity != null)
+        {
+            _changeTracker.Track(entity, EntityState.Unchanged);
+        }
+        return entity;
+    }
+
+    public override Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        _changeTracker.Track(entity, EntityState.Added);
+        return Task.FromResult(entity); // Don't insert yet, SaveChangesAsync will do it
+    }
+
+    public override Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        if (!_changeTracker.IsTracking(entity))
+        {
+            _changeTracker.Track(entity, EntityState.Modified);
+        }
+        else
+        {
+            var entry = _changeTracker.GetEntry(entity);
+            if (entry != null)
+            {
+                entry.State = EntityState.Modified;
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    public override Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        if (!_changeTracker.IsTracking(entity))
+        {
+            _changeTracker.Track(entity, EntityState.Deleted);
+        }
+        else
+        {
+            var entry = _changeTracker.GetEntry(entity);
+            if (entry != null)
+            {
+                entry.State = EntityState.Deleted;
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    public override async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await GetByIdAsync(id, cancellationToken);
+        if (entity != null)
+        {
+            await DeleteAsync(entity, cancellationToken);
+        }
+    }
 }

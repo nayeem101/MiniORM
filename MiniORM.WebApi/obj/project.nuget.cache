@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "4NNYwwUihj0=",
+  "dgSpecHash": "oFGkuK0zPoY=",
   "success": true,
-  "projectFilePath": "D:\\Personal\\c-sharp-learning\\MiniORM.WebApi\\MiniORM.WebApi.csproj",
+  "projectFilePath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.WebApi\\MiniORM.WebApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\inaye\\.nuget\\packages\\microsoft.data.sqlite\\10.0.0\\microsoft.data.sqlite.10.0.0.nupkg.sha512",
     "C:\\Users\\inaye\\.nuget\\packages\\microsoft.data.sqlite.core\\10.0.0\\microsoft.data.sqlite.core.10.0.0.nupkg.sha512",

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Personal\\c-sharp-learning\\MiniORM.Demo\\MiniORM.Demo.csproj": {}
+    "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Demo\\MiniORM.Demo.csproj": {}
   },
   "projects": {
-    "D:\\Personal\\c-sharp-learning\\MiniORM.Core\\MiniORM.Core.csproj": {
+    "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Core\\MiniORM.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Personal\\c-sharp-learning\\MiniORM.Core\\MiniORM.Core.csproj",
+        "projectUniqueName": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Core\\MiniORM.Core.csproj",
         "projectName": "MiniORM.Core",
-        "projectPath": "D:\\Personal\\c-sharp-learning\\MiniORM.Core\\MiniORM.Core.csproj",
+        "projectPath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Core\\MiniORM.Core.csproj",
         "packagesPath": "C:\\Users\\inaye\\.nuget\\packages\\",
-        "outputPath": "D:\\Personal\\c-sharp-learning\\MiniORM.Core\\obj\\",
+        "outputPath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -89,14 +89,14 @@
         }
       }
     },
-    "D:\\Personal\\c-sharp-learning\\MiniORM.Demo\\MiniORM.Demo.csproj": {
+    "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Demo\\MiniORM.Demo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Personal\\c-sharp-learning\\MiniORM.Demo\\MiniORM.Demo.csproj",
+        "projectUniqueName": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Demo\\MiniORM.Demo.csproj",
         "projectName": "MiniORM.Demo",
-        "projectPath": "D:\\Personal\\c-sharp-learning\\MiniORM.Demo\\MiniORM.Demo.csproj",
+        "projectPath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Demo\\MiniORM.Demo.csproj",
         "packagesPath": "C:\\Users\\inaye\\.nuget\\packages\\",
-        "outputPath": "D:\\Personal\\c-sharp-learning\\MiniORM.Demo\\obj\\",
+        "outputPath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Demo\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -117,8 +117,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Personal\\c-sharp-learning\\MiniORM.Core\\MiniORM.Core.csproj": {
-                "projectPath": "D:\\Personal\\c-sharp-learning\\MiniORM.Core\\MiniORM.Core.csproj"
+              "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Core\\MiniORM.Core.csproj": {
+                "projectPath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Core\\MiniORM.Core.csproj"
               }
             }
           }

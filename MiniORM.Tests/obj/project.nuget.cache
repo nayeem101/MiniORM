@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "CRTwuVGVcOM=",
+  "dgSpecHash": "7pbAS3GSFRA=",
   "success": true,
-  "projectFilePath": "D:\\Personal\\c-sharp-learning\\MiniORM.Tests\\MiniORM.Tests.csproj",
+  "projectFilePath": "D:\\Personal\\c-sharp-learning\\MiniORM\\MiniORM.Tests\\MiniORM.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\inaye\\.nuget\\packages\\coverlet.collector\\6.0.0\\coverlet.collector.6.0.0.nupkg.sha512",
     "C:\\Users\\inaye\\.nuget\\packages\\microsoft.codecoverage\\17.6.0\\microsoft.codecoverage.17.6.0.nupkg.sha512",

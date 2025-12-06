@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MiniORM.Demo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+49b86a6e8bea09bd02f50ee25ffb56ac404ad576")]
 [assembly: System.Reflection.AssemblyProductAttribute("MiniORM.Demo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MiniORM.Demo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using Microsoft.Data.Sqlite;
 
 namespace MiniORM.Core.Connection;
@@ -28,6 +29,8 @@ public class SqliteConnectionFactory : IDbConnectionFactory
         return new SqliteConnectionFactory("Data Source=:memory:");
     }
 
+    #region Synchronous Methods
+
     public IDbConnection CreateConnection()
     {
         return new SqliteConnection(ConnectionString);
@@ -39,4 +42,22 @@ public class SqliteConnectionFactory : IDbConnectionFactory
         connection.Open();
         return connection;
     }
+
+    #endregion
+
+    #region Asynchronous Methods
+
+    public Task<DbConnection> CreateConnectionAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<DbConnection>(new SqliteConnection(ConnectionString));
+    }
+
+    public async Task<DbConnection> CreateOpenConnectionAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = new SqliteConnection(ConnectionString);
+        await connection.OpenAsync(cancellationToken);
+        return connection;
+    }
+
+    #endregion
 }

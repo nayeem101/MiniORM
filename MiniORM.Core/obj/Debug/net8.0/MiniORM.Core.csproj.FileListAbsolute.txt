@@ -10,3 +10,16 @@ D:\Personal\c-sharp-learning\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.dll
 D:\Personal\c-sharp-learning\MiniORM.Core\obj\Debug\net8.0\refint\MiniORM.Core.dll
 D:\Personal\c-sharp-learning\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.pdb
 D:\Personal\c-sharp-learning\MiniORM.Core\obj\Debug\net8.0\ref\MiniORM.Core.dll
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\bin\Debug\net8.0\MiniORM.Core.deps.json
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\bin\Debug\net8.0\MiniORM.Core.dll
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\bin\Debug\net8.0\MiniORM.Core.pdb
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.csproj.AssemblyReference.cache
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.AssemblyInfoInputs.cache
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.AssemblyInfo.cs
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.csproj.CoreCompileInputs.cache
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.sourcelink.json
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.dll
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\refint\MiniORM.Core.dll
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\MiniORM.Core.pdb
+D:\Personal\c-sharp-learning\MiniORM\MiniORM.Core\obj\Debug\net8.0\ref\MiniORM.Core.dll
