@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniORM Step-by-Step Tutorial - Build Your Own ORM in C#</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --secondary: #7c3aed;
+            --accent: #10b981;
+            --bg-dark: #1e293b;
+            --bg-darker: #0f172a;
+            --bg-light: #f8fafc;
+            --text-dark: #0f172a;
+            --text-light: #e2e8f0;
+            --code-bg: #1e1e1e;
+            --border: #e2e8f0;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--bg-darker), var(--bg-dark));
+            color: var(--text-light);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 800px;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .metadata-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .metadata-item strong {
+            color: var(--accent);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 2rem 1.5rem;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin-bottom: 0.3rem;
+        }
+
+        .sidebar a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: block;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+            color: var(--accent);
+        }
+
+        .sidebar .sub-item {
+            padding-left: 1.5rem;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 3rem;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 20px;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .section h3 {
+            color: var(--secondary);
+            font-size: 1.5rem;
+            margin: 2.5rem 0 1rem;
+        }
+
+        .section h4 {
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            margin: 2rem 0 1rem;
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+        }
+
+        .section h5 {
+            color: #475569;
+            font-size: 1rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .pattern-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+        }
+
+        .concept-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), #059669);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left-color: var(--warning);
+        }
+
+        .info-box.success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-left-color: var(--accent);
+        }
+
+        .info-box.mentor {
+            background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+            border-left-color: var(--secondary);
+        }
+
+        .info-box h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-dark);
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid #333;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+            font-size: 0.9rem;
+        }
+
+        p code,
+        li code {
+            background: #f1f5f9;
+            color: var(--danger);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .code-header {
+            background: #2d2d2d;
+            color: #888;
+            padding: 0.5rem 1rem;
+            border-radius: 12px 12px 0 0;
+            font-size: 0.85rem;
+            margin-bottom: -1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .code-header+pre {
+            border-radius: 0 0 12px 12px;
+            margin-top: 0;
+        }
+
+        ul,
+        ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .line-explain {
+            background: #fffbeb;
+            border-left: 3px solid var(--warning);
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .line-explain strong {
+            color: var(--secondary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--bg-light);
+        }
+
+        .diagram {
+            background: var(--bg-darker);
+            color: var(--text-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 2px solid var(--primary);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .step-container {
+            display: flex;
+            align-items: flex-start;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .file-path {
+            font-family: monospace;
+            background: var(--bg-dark);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .kw {
+            color: #569cd6;
+        }
+
+        /* C# keywords */
+        .tp {
+            color: #4ec9b0;
+        }
+
+        /* Types */
+        .str {
+            color: #ce9178;
+        }
+
+        /* Strings */
+        .cm {
+            color: #6a9955;
+        }
+
+        /* Comments */
+        .num {
+            color: #b5cea8;
+        }
+
+        /* Numbers */
+        .attr {
+            color: #c586c0;
+        }
+
+        /* Attributes */
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                max-height: none;
+            }
+
+            .content {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+        }
+
+        .back-to-top:hover {
+            background: var(--secondary);
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 MiniORM Step-by-Step Tutorial</h1>
+            <p>Build Your Own Object-Relational Mapper in C# from Scratch</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">A comprehensive code-along guide covering 28 source files, 10+
+                design patterns, and essential C# concepts. Follow along to recreate the entire project while learning
+                professional software development practices.</p>
+            <div class="metadata">
+                <div class="metadata-item"><strong>Framework:</strong> .NET 8.0</div>
+                <div class="metadata-item"><strong>Database:</strong> SQLite</div>
+                <div class="metadata-item"><strong>Patterns:</strong> 10+</div>
+                <div class="metadata-item"><strong>Files:</strong> 28</div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h2>📚 Table of Contents</h2>
+                <ul>
+                    <li><a href="#intro">1. Introduction</a></li>
+                    <li><a href="#setup">2. Project Setup</a></li>
+                    <li><a href="#attributes">3. Custom Attributes</a></li>
+                    <li class="sub-item"><a href="#table-attr">TableAttribute</a></li>
+                    <li class="sub-item"><a href="#column-attr">ColumnAttribute</a></li>
+                    <li class="sub-item"><a href="#pk-attr">PrimaryKeyAttribute</a></li>
+                    <li class="sub-item"><a href="#fk-attr">ForeignKeyAttribute</a></li>
+                    <li class="sub-item"><a href="#notmapped-attr">NotMappedAttribute</a></li>
+                    <li><a href="#core">4. Core Entity System</a></li>
+                    <li class="sub-item"><a href="#entity-state">EntityState</a></li>
+                    <li class="sub-item"><a href="#entity-base">EntityBase</a></li>
+                    <li class="sub-item"><a href="#prop-meta">PropertyMetadata</a></li>
+                    <li class="sub-item"><a href="#entity-meta">EntityMetadata</a></li>
+                    <li class="sub-item"><a href="#entity-mapper">EntityMapper</a></li>
+                    <li><a href="#connection">5. Database Connection</a></li>
+                    <li class="sub-item"><a href="#conn-factory">IDbConnectionFactory</a></li>
+                    <li class="sub-item"><a href="#sqlite-factory">SqliteConnectionFactory</a></li>
+                    <li class="sub-item"><a href="#db-context">DbContext</a></li>
+                    <li><a href="#query">6. Query Building</a></li>
+                    <li class="sub-item"><a href="#query-param">QueryParameter</a></li>
+                    <li class="sub-item"><a href="#sql-builder">SqlQueryBuilder</a></li>
+                    <li class="sub-item"><a href="#insert-builder">InsertQueryBuilder</a></li>
+                    <li class="sub-item"><a href="#update-builder">UpdateQueryBuilder</a></li>
+                    <li class="sub-item"><a href="#delete-builder">DeleteQueryBuilder</a></li>
+                    <li class="sub-item"><a href="#expr-parser">ExpressionParser</a></li>
+                    <li><a href="#repository">7. Repository Pattern</a></li>
+                    <li><a href="#uow">8. Unit of Work</a></li>
+                    <li><a href="#demo">9. Demo Application</a></li>
+                    <li><a href="#summary">10. Summary</a></li>
+                </ul>
+            </aside>
+
+            <main class="content">
+                <!-- SECTION 1: INTRODUCTION -->
+                <section id="intro" class="section">
+                    <h2>1. Introduction & Overview</h2>
+
+                    <h3>What is an ORM?</h3>
+                    <p>An <strong>Object-Relational Mapper (ORM)</strong> is a programming technique that bridges the
+                        gap between object-oriented programming languages and relational databases. Instead of writing
+                        raw SQL, you work with objects in your code, and the ORM handles the translation.</p>
+
+                    <div class="info-box success">
+                        <h4>🎯 What You'll Learn</h4>
+                        <ul>
+                            <li><strong>10+ Design Patterns</strong>: Repository, Unit of Work, Builder, Factory,
+                                Singleton, Observer, Visitor, and more</li>
+                            <li><strong>Advanced C# Features</strong>: Reflection, Attributes, Expression Trees,
+                                Generics, LINQ</li>
+                            <li><strong>Database Programming</strong>: ADO.NET, IDbConnection, parameterized queries,
+                                transactions</li>
+                            <li><strong>Clean Architecture</strong>: Separation of concerns, interfaces, dependency
+                                injection ready</li>
+                        </ul>
+                    </div>
+
+                    <h3>Architecture Overview</h3>
+                    <div class="diagram">┌─────────────────────────────────────────────────────────────────────────┐
+                        │ APPLICATION LAYER │
+                        │ │
+                        │ ┌─────────────┐ ┌─────────────────┐ ┌───────────────────────┐ │
+                        │ │ Entity │ │ Repository │ │ Unit of Work │ │
+                        │ │ Classes │ │ Pattern │ │ Pattern │ │
+                        │ │ (Customer, │ │ (CRUD ops) │ │ (Transactions) │ │
+                        │ │ Order) │ │ │ │ │ │
+                        │ └──────┬──────┘ └────────┬────────┘ └───────────┬───────────┘ │
+                        │ │ │ │ │
+                        │ ▼ ▼ ▼ │
+                        │ ┌─────────────────────────────────────────────────────────────────┐ │
+                        │ │ ORM CORE │ │
+                        │ │ │ │
+                        │ │ ┌──────────────┐ ┌──────────────┐ ┌────────────────────┐ │ │
+                        │ │ │ Attributes │ │ EntityMapper │ │ Query Builders │ │ │
+                        │ │ │ (Metadata) │ │ (Reflection) │ │ (Builder Pattern) │ │ │
+                        │ │ └──────────────┘ └──────────────┘ └────────────────────┘ │ │
+                        │ └─────────────────────────────────────────────────────────────────┘ │
+                        │ │ │
+                        │ ▼ │
+                        │ ┌─────────────────────────────────────────────────────────────────┐ │
+                        │ │ DATABASE CONNECTION LAYER │ │
+                        │ │ (DbContext, ConnectionFactory, Transactions) │ │
+                        │ └─────────────────────────────────────────────────────────────────┘ │
+                        │ │ │
+                        └────────────────────────────────────┼────────────────────────────────────┘
+                        ▼
+                        ┌─────────────────────┐
+                        │ SQLite Database │
+                        │ (or any ADO.NET │
+                        │ compatible DB) │
+                        └─────────────────────┘</div>
+
+                    <h3>Design Patterns Summary</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pattern</th>
+                                <th>Component</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="pattern-badge">Metadata</span></td>
+                                <td>Attributes</td>
+                                <td>Attach mapping info declaratively to classes</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Builder</span></td>
+                                <td>Query Builders</td>
+                                <td>Construct complex SQL with fluent API</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Repository</span></td>
+                                <td>Repository</td>
+                                <td>Centralize data access logic</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Unit of Work</span></td>
+                                <td>UnitOfWork</td>
+                                <td>Coordinate transactions across repositories</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Singleton</span></td>
+                                <td>DbContext</td>
+                                <td>Single database connection instance</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Factory</span></td>
+                                <td>ConnectionFactory</td>
+                                <td>Create database connections</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Visitor</span></td>
+                                <td>ExpressionParser</td>
+                                <td>Parse expression trees to SQL</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Observer</span></td>
+                                <td>ChangeTracker</td>
+                                <td>Track entity property changes</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Flyweight</span></td>
+                                <td>EntityMetadata</td>
+                                <td>Cache and reuse metadata instances</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Template Method</span></td>
+                                <td>EntityBase</td>
+                                <td>Common entity behavior skeleton</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- SECTION 2: PROJECT SETUP -->
+                <section id="setup" class="section">
+                    <h2>2. Project Setup</h2>
+
+                    <div class="info-box mentor">
+                        <h4>🧑‍🏫 Mentor Note</h4>
+                        <p>We'll create a clean solution structure with two projects: a class library for the ORM core
+                            and a console app for demos. This separation is a best practice - it keeps your reusable
+                            code separate from application code.</p>
+                    </div>
+
+                    <h3>Step 1: Create the Solution</h3>
+                    <p>Open your terminal and run these commands:</p>
+
+                    <div class="code-header"><span>Terminal Commands</span></div>
+                    <pre><code><span class="cm"># Create a new solution</span>
+dotnet new sln -n MiniORM
+
+<span class="cm"># Create the core library project</span>
+dotnet new classlib -n MiniORM.Core
+
+<span class="cm"># Create the demo console project</span>
+dotnet new console -n MiniORM.Demo
+
+<span class="cm"># Add projects to the solution</span>
+dotnet sln add MiniORM.Core
+dotnet sln add MiniORM.Demo
+
+<span class="cm"># Add reference from Demo to Core</span>
+dotnet add MiniORM.Demo reference MiniORM.Core
+
+<span class="cm"># Add SQLite package to Core</span>
+<span class="kw">cd</span> MiniORM.Core
+dotnet add package Microsoft.Data.Sqlite</code></pre>
+
+                    <h3>Step 2: Project Structure</h3>
+                    <p>Create the following folder structure in <code>MiniORM.Core</code>:</p>
+
+                    <div class="code-header"><span>Folder Structure</span></div>
+                    <pre><code>MiniORM/
+├── MiniORM.sln
+├── MiniORM.Core/
+│   ├── MiniORM.Core.csproj
+│   ├── Attributes/
+│   │   ├── TableAttribute.cs
+│   │   ├── ColumnAttribute.cs
+│   │   ├── PrimaryKeyAttribute.cs
+│   │   ├── ForeignKeyAttribute.cs
+│   │   └── NotMappedAttribute.cs
+│   ├── Core/
+│   │   ├── EntityBase.cs
+│   │   ├── EntityState.cs
+│   │   ├── EntityMapper.cs
+│   │   ├── EntityMetadata.cs
+│   │   └── PropertyMetadata.cs
+│   ├── Connection/
+│   │   ├── IDbConnectionFactory.cs
+│   │   ├── SqliteConnectionFactory.cs
+│   │   └── DbContext.cs
+│   ├── Query/
+│   │   ├── QueryParameter.cs
+│   │   ├── SqlQueryBuilder.cs
+│   │   ├── InsertQueryBuilder.cs
+│   │   ├── UpdateQueryBuilder.cs
+│   │   ├── DeleteQueryBuilder.cs
+│   │   └── ExpressionParser.cs
+│   ├── Repository/
+│   │   ├── IRepository.cs
+│   │   └── Repository.cs
+│   └── UnitOfWork/
+│       ├── IUnitOfWork.cs
+│       ├── UnitOfWork.cs
+│       ├── EntityEntry.cs
+│       ├── ChangeTracker.cs
+│       └── TrackedRepository.cs
+└── MiniORM.Demo/
+    ├── MiniORM.Demo.csproj
+    ├── Entities/
+    │   ├── Customer.cs
+    │   └── Order.cs
+    └── Program.cs</code></pre>
+
+                    <h3>Step 3: The Project Files</h3>
+
+                    <h4>MiniORM.Core.csproj</h4>
+                    <div class="code-header"><span>MiniORM.Core/MiniORM.Core.csproj</span></div>
+                    <pre><code><span class="attr">&lt;Project Sdk="Microsoft.NET.Sdk"&gt;</span>
+
+  <span class="attr">&lt;PropertyGroup&gt;</span>
+    <span class="cm">&lt;!-- Target .NET 8 for latest features --&gt;</span>
+    <span class="attr">&lt;TargetFramework&gt;</span>net8.0<span class="attr">&lt;/TargetFramework&gt;</span>
+    <span class="cm">&lt;!-- Enable implicit usings (System, System.Collections.Generic, etc.) --&gt;</span>
+    <span class="attr">&lt;ImplicitUsings&gt;</span>enable<span class="attr">&lt;/ImplicitUsings&gt;</span>
+    <span class="cm">&lt;!-- Enable nullable reference types for safer code --&gt;</span>
+    <span class="attr">&lt;Nullable&gt;</span>enable<span class="attr">&lt;/Nullable&gt;</span>
+  <span class="attr">&lt;/PropertyGroup&gt;</span>
+
+  <span class="attr">&lt;ItemGroup&gt;</span>
+    <span class="cm">&lt;!-- SQLite driver for .NET --&gt;</span>
+    <span class="attr">&lt;PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" /&gt;</span>
+  <span class="attr">&lt;/ItemGroup&gt;</span>
+
+<span class="attr">&lt;/Project&gt;</span></code></pre>
+
+                    <div class="line-explain">
+                        <strong>ImplicitUsings:</strong> Automatically includes common namespaces like
+                        <code>System</code>, <code>System.Collections.Generic</code>, and <code>System.Linq</code> so
+                        you don't need to write them in every file.
+                    </div>
+                    <div class="line-explain">
+                        <strong>Nullable:</strong> Enables C# nullable reference types. This helps catch null reference
+                        bugs at compile time by requiring you to explicitly mark types that can be null with
+                        <code>?</code>.
+                    </div>
+                </section>
+
+                <!-- SECTION 3: ATTRIBUTES -->
+                <section id="attributes" class="section">
+                    <h2>3. Custom Attributes (Metadata Pattern)</h2>
+
+                    <span class="pattern-badge">Metadata Pattern</span>
+                    <span class="concept-badge">C# Attributes</span>
+                    <span class="concept-badge">Reflection</span>
+
+                    <div class="info-box">
+                        <h4>💡 Why Attributes?</h4>
+                        <p>Attributes let us attach metadata to classes and properties <em>declaratively</em>. Instead
+                            of writing configuration code, we simply "tag" our entities with attributes like
+                            <code>[Table("Customers")]</code>. The ORM reads these at runtime using reflection.
+                        </p>
+                    </div>
+
+                    <!-- TableAttribute -->
+                    <h3 id="table-attr">3.1 TableAttribute.cs</h3>
+                    <p class="file-path">MiniORM.Core/Attributes/TableAttribute.cs</p>
+
+                    <div class="code-header"><span>TableAttribute.cs</span><span>32 lines</span></div>
+                    <pre><code><span class="kw">namespace</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Maps a class to a database table.</span>
+<span class="cm">/// Design Pattern: Metadata Pattern</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+[<span class="attr">AttributeUsage</span>(<span class="tp">AttributeTargets</span>.Class, Inherited = <span class="kw">false</span>, AllowMultiple = <span class="kw">false</span>)]
+<span class="kw">public class</span> <span class="tp">TableAttribute</span> : <span class="tp">Attribute</span>
+{
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// The name of the database table.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span> Name { <span class="kw">get</span>; }
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Optional schema name (e.g., "dbo" in SQL Server).</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span> Schema { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="str">""</span>;
+
+    <span class="kw">public</span> <span class="tp">TableAttribute</span>(<span class="tp">string</span> name)
+    {
+        Name = name ?? <span class="kw">throw new</span> <span class="tp">ArgumentNullException</span>(<span class="kw">nameof</span>(name));
+    }
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Gets the fully qualified table name.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span> FullTableName => <span class="tp">string</span>.IsNullOrEmpty(Schema)
+        ? <span class="str">$"[{Name}]"</span>
+        : <span class="str">$"[{Schema}].[{Name}]"</span>;
+}</code></pre>
+
+                    <h5>Line-by-Line Explanation</h5>
+
+                    <div class="line-explain">
+                        <strong>Line 1 - File-scoped namespace:</strong> <code>namespace MiniORM.Core.Attributes;</code>
+                        - The semicolon makes this a file-scoped namespace (C# 10+). Everything in this file belongs to
+                        this namespace without needing curly braces.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 7 - [AttributeUsage]:</strong> This meta-attribute defines WHERE our attribute can
+                        be used:
+                        <ul>
+                            <li><code>AttributeTargets.Class</code> - Can only be applied to classes</li>
+                            <li><code>Inherited = false</code> - Subclasses don't inherit this attribute</li>
+                            <li><code>AllowMultiple = false</code> - Can only be applied once per class</li>
+                        </ul>
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 8 - Inheriting from Attribute:</strong> All custom attributes must inherit from
+                        <code>System.Attribute</code>. By convention, attribute class names end with "Attribute", but
+                        when using them we can omit this suffix: <code>[Table("Customers")]</code>.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 13 - Get-only property:</strong> <code>public string Name { get; }</code> - This is
+                        an immutable property. It can only be set in the constructor, making the attribute's core data
+                        read-only after creation.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 18 - Auto-property with initializer:</strong>
+                        <code>Schema { get; set; } = "";</code> - This property has a default value. Users can
+                        optionally set it: <code>[Table("Customers", Schema = "dbo")]</code>.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 22 - Null guard:</strong>
+                        <code>name ?? throw new ArgumentNullException(nameof(name))</code> - The null-coalescing
+                        operator <code>??</code> throws if null. <code>nameof(name)</code> gives us the parameter name
+                        as a string for better error messages.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Lines 28-30 - Expression-bodied property:</strong> <code>FullTableName =></code> - The
+                        <code>=></code> syntax creates a computed property. It's recalculated each time it's accessed.
+                        The string interpolation <code>$"[{Name}]"</code> creates SQL-safe bracket notation.
+                    </div>
+
+                    <!-- ColumnAttribute -->
+                    <h3 id="column-attr">3.2 ColumnAttribute.cs</h3>
+                    <p class="file-path">MiniORM.Core/Attributes/ColumnAttribute.cs</p>
+
+                    <div class="code-header"><span>ColumnAttribute.cs</span><span>37 lines</span></div>
+                    <pre><code><span class="kw">namespace</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Maps a property to a database column.</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+[<span class="attr">AttributeUsage</span>(<span class="tp">AttributeTargets</span>.Property, Inherited = <span class="kw">true</span>, AllowMultiple = <span class="kw">false</span>)]
+<span class="kw">public class</span> <span class="tp">ColumnAttribute</span> : <span class="tp">Attribute</span>
+{
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// The name of the database column.</span>
+    <span class="cm">/// If not specified, the property name is used.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span>? Name { <span class="kw">get</span>; }
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// The SQL data type (e.g., "NVARCHAR(100)", "INT").</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span>? DbType { <span class="kw">get</span>; <span class="kw">set</span>; }
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Whether the column allows NULL values.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">bool</span> IsNullable { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="kw">true</span>;
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Maximum length for string columns.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">int</span> MaxLength { <span class="kw">get</span>; <span class="kw">set</span>; } = -<span class="num">1</span>;
+
+    <span class="kw">public</span> <span class="tp">ColumnAttribute</span>() { }
+
+    <span class="kw">public</span> <span class="tp">ColumnAttribute</span>(<span class="tp">string</span> name)
+    {
+        Name = name;
+    }
+}</code></pre>
+
+                    <h5>Key Concepts</h5>
+
+                    <div class="line-explain">
+                        <strong>Line 6 - Inherited = true:</strong> Unlike TableAttribute, column attributes are
+                        inherited. If a base class has <code>[Column]</code> on a property, derived classes inherit it.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 13 - Nullable reference type:</strong> <code>string?</code> - The <code>?</code>
+                        indicates this can be null. Without it, the compiler would warn if we don't initialize it.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Lines 30-35 - Constructor overloading:</strong> Two constructors allow flexible usage:
+                        <ul>
+                            <li><code>[Column]</code> - Uses property name as column name</li>
+                            <li><code>[Column("CustomerName")]</code> - Specifies custom column name</li>
+                            <li><code>[Column("CustomerName", MaxLength = 100)]</code> - With properties</li>
+                        </ul>
+                    </div>
+
+                    <!-- PrimaryKeyAttribute -->
+                    <h3 id="pk-attr">3.3 PrimaryKeyAttribute.cs</h3>
+                    <p class="file-path">MiniORM.Core/Attributes/PrimaryKeyAttribute.cs</p>
+
+                    <div class="code-header"><span>PrimaryKeyAttribute.cs</span><span>19 lines</span></div>
+                    <pre><code><span class="kw">namespace</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Marks a property as the primary key.</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+[<span class="attr">AttributeUsage</span>(<span class="tp">AttributeTargets</span>.Property, Inherited = <span class="kw">true</span>, AllowMultiple = <span class="kw">false</span>)]
+<span class="kw">public class</span> <span class="tp">PrimaryKeyAttribute</span> : <span class="tp">Attribute</span>
+{
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Whether the primary key is auto-generated (IDENTITY/AUTOINCREMENT).</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">bool</span> AutoGenerate { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="kw">true</span>;
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// The name of the sequence (for databases that use sequences).</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span>? SequenceName { <span class="kw">get</span>; <span class="kw">set</span>; }
+}</code></pre>
+
+                    <div class="info-box mentor">
+                        <h4>🧑‍🏫 Mentor Note</h4>
+                        <p><code>AutoGenerate = true</code> means the database will generate the ID (like SQL Server's
+                            IDENTITY or SQLite's AUTOINCREMENT). We default to <code>true</code> because that's the most
+                            common case. Usage: <code>[PrimaryKey]</code> or
+                            <code>[PrimaryKey(AutoGenerate = false)]</code>.
+                        </p>
+                    </div>
+
+                    <!-- ForeignKeyAttribute -->
+                    <h3 id="fk-attr">3.4 ForeignKeyAttribute.cs</h3>
+                    <p class="file-path">MiniORM.Core/Attributes/ForeignKeyAttribute.cs</p>
+
+                    <div class="code-header"><span>ForeignKeyAttribute.cs</span><span>24 lines</span></div>
+                    <pre><code><span class="kw">namespace</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Marks a property as a foreign key relationship.</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+[<span class="attr">AttributeUsage</span>(<span class="tp">AttributeTargets</span>.Property, Inherited = <span class="kw">true</span>, AllowMultiple = <span class="kw">false</span>)]
+<span class="kw">public class</span> <span class="tp">ForeignKeyAttribute</span> : <span class="tp">Attribute</span>
+{
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// The type of the related entity.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">Type</span> RelatedEntity { <span class="kw">get</span>; }
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// The property name on the related entity (usually the primary key).</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public</span> <span class="tp">string</span> RelatedProperty { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="str">"Id"</span>;
+
+    <span class="kw">public</span> <span class="tp">ForeignKeyAttribute</span>(<span class="tp">Type</span> relatedEntity)
+    {
+        RelatedEntity = relatedEntity ?? <span class="kw">throw new</span> <span class="tp">ArgumentNullException</span>(<span class="kw">nameof</span>(relatedEntity));
+    }
+}</code></pre>
+
+                    <div class="line-explain">
+                        <strong>Line 12 - Type property:</strong> <code>Type RelatedEntity</code> - Stores metadata
+                        about the related entity class. Usage: <code>[ForeignKey(typeof(Customer))]</code>. The
+                        <code>typeof()</code> operator gets the <code>Type</code> object at compile time.
+                    </div>
+
+                    <!-- NotMappedAttribute -->
+                    <h3 id="notmapped-attr">3.5 NotMappedAttribute.cs</h3>
+                    <p class="file-path">MiniORM.Core/Attributes/NotMappedAttribute.cs</p>
+
+                    <div class="code-header"><span>NotMappedAttribute.cs</span><span>11 lines</span></div>
+                    <pre><code><span class="kw">namespace</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Excludes a property from database mapping.</span>
+<span class="cm">/// Useful for computed properties or navigation properties.</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+[<span class="attr">AttributeUsage</span>(<span class="tp">AttributeTargets</span>.Property, Inherited = <span class="kw">true</span>, AllowMultiple = <span class="kw">false</span>)]
+<span class="kw">public class</span> <span class="tp">NotMappedAttribute</span> : <span class="tp">Attribute</span>
+{
+}</code></pre>
+
+                    <div class="info-box">
+                        <h4>💡 Marker Attribute</h4>
+                        <p>This is a "marker attribute" - it has no properties or methods, just its presence is
+                            meaningful. The ORM checks if a property has this attribute and skips it during database
+                            operations. Example:
+                            <code>[NotMapped] public string DisplayName => $"{FirstName} {LastName}";</code>
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Continue with more sections... -->
+                <section id="core" class="section">
+                    <h2>4. Core Entity System</h2>
+
+                    <span class="pattern-badge">Template Method</span>
+                    <span class="pattern-badge">Observer</span>
+                    <span class="pattern-badge">Flyweight</span>
+                    <span class="concept-badge">Reflection</span>
+                    <span class="concept-badge">Generics</span>
+
+                    <p>The core system handles entity state tracking, metadata caching, and object-relational mapping
+                        using reflection.</p>
+
+                    <!-- EntityState -->
+                    <h3 id="entity-state">4.1 EntityState.cs</h3>
+                    <p class="file-path">MiniORM.Core/Core/EntityState.cs</p>
+
+                    <div class="code-header"><span>EntityState.cs</span><span>33 lines</span></div>
+                    <pre><code><span class="kw">namespace</span> <span class="tp">MiniORM.Core</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Represents the state of an entity in the context.</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+<span class="kw">public enum</span> <span class="tp">EntityState</span>
+{
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Entity is not being tracked.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    Detached,
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Entity exists in the database and has not been modified.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    Unchanged,
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Entity is new and will be inserted.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    Added,
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Entity has been modified and will be updated.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    Modified,
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Entity will be deleted.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    Deleted
+}</code></pre>
+
+                    <div class="info-box mentor">
+                        <h4>🧑‍🏫 State Machine Concept</h4>
+                        <p>Entity states form a simple state machine:</p>
+                        <ul>
+                            <li><strong>Detached</strong> → (Add to context) → <strong>Added</strong></li>
+                            <li><strong>Added</strong> → (SaveChanges) → <strong>Unchanged</strong></li>
+                            <li><strong>Unchanged</strong> → (Modify property) → <strong>Modified</strong></li>
+                            <li><strong>Modified</strong> → (SaveChanges) → <strong>Unchanged</strong></li>
+                            <li>Any state → (Delete) → <strong>Deleted</strong></li>
+                            <li><strong>Deleted</strong> → (SaveChanges) → <strong>Detached</strong></li>
+                        </ul>
+                    </div>
+
+                    <!-- EntityBase -->
+                    <h3 id="entity-base">4.2 EntityBase.cs</h3>
+                    <p class="file-path">MiniORM.Core/Core/EntityBase.cs</p>
+
+                    <div class="code-header"><span>EntityBase.cs</span><span>67 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">System.ComponentModel</span>;
+<span class="kw">using</span> <span class="tp">System.Runtime.CompilerServices</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core</span>;
+
+<span class="cm">/// &lt;summary&gt;</span>
+<span class="cm">/// Base class for all entities.</span>
+<span class="cm">/// Implements INotifyPropertyChanged for change tracking.</span>
+<span class="cm">/// </span>
+<span class="cm">/// Design Pattern: Template Method Pattern</span>
+<span class="cm">/// - Provides a skeleton for entity behavior</span>
+<span class="cm">/// - Subclasses fill in specific details (properties)</span>
+<span class="cm">/// </span>
+<span class="cm">/// Design Pattern: Observer Pattern</span>
+<span class="cm">/// - Raises events when properties change</span>
+<span class="cm">/// &lt;/summary&gt;</span>
+<span class="kw">public abstract class</span> <span class="tp">EntityBase</span> : <span class="tp">INotifyPropertyChanged</span>
+{
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Event for property change notifications (used by change tracker).</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">public event</span> <span class="tp">PropertyChangedEventHandler</span>? PropertyChanged;
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Entity state for tracking changes.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    [<span class="attr">NotMapped</span>]
+    <span class="kw">public</span> <span class="tp">EntityState</span> State { <span class="kw">get</span>; <span class="kw">internal set</span>; } = <span class="tp">EntityState</span>.Detached;
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Raises the PropertyChanged event.</span>
+    <span class="cm">/// The CallerMemberName attribute automatically captures the property name.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">protected virtual void</span> OnPropertyChanged([<span class="attr">CallerMemberName</span>] <span class="tp">string</span>? propertyName = <span class="kw">null</span>)
+    {
+        PropertyChanged?.Invoke(<span class="kw">this</span>, <span class="kw">new</span> <span class="tp">PropertyChangedEventArgs</span>(propertyName));
+
+        <span class="cm">// Mark as modified when a property changes (if already attached)</span>
+        <span class="kw">if</span> (State == <span class="tp">EntityState</span>.Unchanged)
+        {
+            State = <span class="tp">EntityState</span>.Modified;
+        }
+    }
+
+    <span class="cm">/// &lt;summary&gt;</span>
+    <span class="cm">/// Helper method to set property values with change notification.</span>
+    <span class="cm">/// &lt;/summary&gt;</span>
+    <span class="kw">protected bool</span> SetProperty&lt;<span class="tp">T</span>&gt;(<span class="kw">ref</span> <span class="tp">T</span> field, <span class="tp">T</span> value, [<span class="attr">CallerMemberName</span>] <span class="tp">string</span>? propertyName = <span class="kw">null</span>)
+    {
+        <span class="cm">// Check if value actually changed</span>
+        <span class="kw">if</span> (<span class="tp">EqualityComparer</span>&lt;<span class="tp">T</span>&gt;.Default.Equals(field, value))
+        {
+            <span class="kw">return false</span>;
+        }
+
+        field = value;
+        OnPropertyChanged(propertyName);
+        <span class="kw">return true</span>;
+    }
+}</code></pre>
+
+                    <h5>Key Concepts Explained</h5>
+
+                    <div class="line-explain">
+                        <strong>Line 18 - Abstract class:</strong> <code>public abstract class EntityBase</code> -
+                        Abstract classes cannot be instantiated directly. They serve as base classes that define common
+                        behavior. All your entities (Customer, Order, etc.) will inherit from this.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 18 - INotifyPropertyChanged:</strong> This interface is key to the Observer
+                        pattern. It defines one event: <code>PropertyChanged</code>. When a property changes, we
+                        "notify" all subscribers by raising this event.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 23 - Event declaration:</strong>
+                        <code>public event PropertyChangedEventHandler? PropertyChanged;</code> - The <code>event</code>
+                        keyword creates a multicast delegate that external code can subscribe to. The <code>?</code>
+                        makes it nullable (no subscribers = null).
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 29 - Internal set:</strong> <code>internal set</code> - The property can be read
+                        from anywhere, but only code within the same assembly (MiniORM.Core) can modify it. This
+                        protects entity state from external manipulation.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 35 - [CallerMemberName]:</strong> This is compiler magic! When you call
+                        <code>OnPropertyChanged()</code> from a property setter, the compiler automatically fills in the
+                        property name. No more magic strings!
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 37 - Null-conditional invoke:</strong> <code>PropertyChanged?.Invoke(...)</code> -
+                        The <code>?.</code> operator is safe navigation. If <code>PropertyChanged</code> is null (no
+                        subscribers), the invoke is skipped instead of throwing.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 49 - Generic method:</strong>
+                        <code>SetProperty&lt;T&gt;(ref T field, T value, ...)</code> - The <code>&lt;T&gt;</code> makes
+                        this work with any type. The <code>ref</code> keyword passes the backing field by reference so
+                        we can modify it.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Line 52 - EqualityComparer:</strong>
+                        <code>EqualityComparer&lt;T&gt;.Default.Equals(field, value)</code> - This is the proper way to
+                        compare generic values. It handles null, value types, and custom equality comparers correctly.
+                    </div>
+
+                    <div class="info-box success">
+                        <h4>✅ Usage Example</h4>
+                        <pre><code><span class="kw">public class</span> <span class="tp">Customer</span> : <span class="tp">EntityBase</span>
+{
+    <span class="kw">private string</span> _name = <span class="str">""</span>;
+    
+    <span class="kw">public string</span> Name
+    {
+        <span class="kw">get</span> => _name;
+        <span class="kw">set</span> => SetProperty(<span class="kw">ref</span> _name, value); <span class="cm">// Automatically notifies!</span>
+    }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- PropertyMetadata -->
+                <h3 id="prop-meta">4.3 PropertyMetadata.cs</h3>
+                <p class="file-path">MiniORM.Core/Core/PropertyMetadata.cs</p>
+
+                <p>This class holds metadata about a single property, extracted using reflection.</p>
+
+                <div class="code-header"><span>PropertyMetadata.cs (Key Parts)</span><span>123 lines</span></div>
+                <pre><code><span class="kw">using</span> <span class="tp">System.Reflection</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core</span>;
+
+<span class="kw">public class</span> <span class="tp">PropertyMetadata</span>
+{
+    <span class="kw">public</span> <span class="tp">PropertyInfo</span> PropertyInfo { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">string</span> PropertyName { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">string</span> ColumnName { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">Type</span> PropertyType { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">bool</span> IsPrimaryKey { <span class="kw">get</span>; <span class="kw">internal set</span>; }
+    <span class="kw">public</span> <span class="tp">bool</span> IsAutoGenerated { <span class="kw">get</span>; <span class="kw">internal set</span>; }
+    <span class="kw">public</span> <span class="tp">bool</span> IsNullable { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">bool</span> IsNotMapped { <span class="kw">get</span>; }
+
+    <span class="kw">public</span> <span class="tp">PropertyMetadata</span>(<span class="tp">PropertyInfo</span> propertyInfo)
+    {
+        PropertyInfo = propertyInfo ?? <span class="kw">throw new</span> <span class="tp">ArgumentNullException</span>(<span class="kw">nameof</span>(propertyInfo));
+        PropertyName = propertyInfo.Name;
+        PropertyType = propertyInfo.PropertyType;
+
+        <span class="cm">// Check for [NotMapped]</span>
+        IsNotMapped = propertyInfo.GetCustomAttribute&lt;<span class="tp">NotMappedAttribute</span>&gt;() != <span class="kw">null</span>;
+
+        <span class="cm">// Check for [Column]</span>
+        <span class="kw">var</span> columnAttr = propertyInfo.GetCustomAttribute&lt;<span class="tp">ColumnAttribute</span>&gt;();
+        ColumnName = columnAttr?.Name ?? PropertyName;
+
+        <span class="cm">// Check for [PrimaryKey]</span>
+        <span class="kw">var</span> pkAttr = propertyInfo.GetCustomAttribute&lt;<span class="tp">PrimaryKeyAttribute</span>&gt;();
+        IsPrimaryKey = pkAttr != <span class="kw">null</span>;
+        IsAutoGenerated = pkAttr?.AutoGenerate ?? <span class="kw">false</span>;
+    }
+
+    <span class="cm">/// Gets the value of this property from an entity instance.</span>
+    <span class="kw">public</span> <span class="tp">object</span>? GetValue(<span class="tp">object</span> entity) => PropertyInfo.GetValue(entity);
+
+    <span class="cm">/// Sets the value of this property on an entity instance.</span>
+    <span class="kw">public void</span> SetValue(<span class="tp">object</span> entity, <span class="tp">object</span>? value)
+    {
+        <span class="kw">if</span> (value == <span class="tp">DBNull</span>.Value) value = <span class="kw">null</span>;
+        PropertyInfo.SetValue(entity, value);
+    }
+}</code></pre>
+
+                <div class="line-explain">
+                    <strong>PropertyInfo.GetCustomAttribute&lt;T&gt;():</strong> This is reflection in action! It reads
+                    the custom attribute from the property at runtime. Returns null if the attribute isn't present.
+                </div>
+
+                <div class="line-explain">
+                    <strong>Null-conditional access (?.Name):</strong> <code>columnAttr?.Name ?? PropertyName</code> -
+                    If columnAttr is null, use PropertyName. This is a common pattern for "use custom value or fall back
+                    to default."
+                </div>
+
+                <div class="line-explain">
+                    <strong>PropertyInfo class:</strong> Part of <code>System.Reflection</code>, this class represents metadata about a property. It contains the property's name, type, getter/setter methods, and any attributes. We store it to access property values later via <code>GetValue()</code> and <code>SetValue()</code>.
+                </div>
+
+                <div class="line-explain">
+                    <strong>internal set accessors:</strong> <code>IsPrimaryKey { get; internal set; }</code> - The property can be read from anywhere, but can only be modified within the same assembly. This allows <code>EntityMetadata</code> to update these flags when applying naming conventions.
+                </div>
+
+                <div class="line-explain">
+                    <strong>DBNull.Value handling:</strong> <code>if (value == DBNull.Value) value = null;</code> - Database NULL values come as <code>DBNull.Value</code>, not C# <code>null</code>. We convert to null before setting the property to avoid type mismatch exceptions.
+                </div>
+
+                <div class="line-explain">
+                    <strong>Reflection GetValue/SetValue:</strong> <code>PropertyInfo.GetValue(entity)</code> and <code>PropertyInfo.SetValue(entity, value)</code> use reflection to read/write property values dynamically. This is slower than direct access but essential for generic ORM operations where we don't know types at compile time.
+                </div>
+
+                <!-- EntityMetadata -->
+                <h3 id="entity-meta">4.4 EntityMetadata.cs</h3>
+                <p class="file-path">MiniORM.Core/Core/EntityMetadata.cs</p>
+
+                <span class="pattern-badge">Flyweight Pattern</span>
+
+                <div class="code-header"><span>EntityMetadata.cs</span><span>87 lines</span></div>
+                <pre><code><span class="kw">using</span> <span class="tp">System.Reflection</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core</span>;
+
+<span class="cm">/// Holds cached metadata about an entity type.</span>
+<span class="cm">/// Design Pattern: Flyweight - one instance per entity type, reused.</span>
+<span class="kw">public class</span> <span class="tp">EntityMetadata</span>
+{
+    <span class="kw">public</span> <span class="tp">Type</span> EntityType { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">string</span> TableName { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">string</span> FullTableName { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">PropertyMetadata</span>? PrimaryKey { <span class="kw">get</span>; <span class="kw">private set</span>; }
+    <span class="kw">public</span> <span class="tp">IReadOnlyList</span>&lt;<span class="tp">PropertyMetadata</span>&gt; MappedProperties { <span class="kw">get</span>; }
+
+    <span class="kw">public</span> <span class="tp">EntityMetadata</span>(<span class="tp">Type</span> entityType)
+    {
+        EntityType = entityType;
+
+        <span class="cm">// Get table name from attribute or use class name</span>
+        <span class="kw">var</span> tableAttr = entityType.GetCustomAttribute&lt;<span class="tp">TableAttribute</span>&gt;();
+        TableName = tableAttr?.Name ?? entityType.Name;
+        FullTableName = <span class="str">$"[{TableName}]"</span>;
+
+        <span class="cm">// Get all public instance properties with read/write</span>
+        <span class="kw">var</span> properties = entityType
+            .GetProperties(<span class="tp">BindingFlags</span>.Public | <span class="tp">BindingFlags</span>.Instance)
+            .Where(p => p.CanRead && p.CanWrite)
+            .Select(p => <span class="kw">new</span> <span class="tp">PropertyMetadata</span>(p))
+            .ToList();
+
+        MappedProperties = properties.Where(p => !p.IsNotMapped).ToList();
+        PrimaryKey = properties.FirstOrDefault(p => p.IsPrimaryKey);
+
+        <span class="cm">// Convention: Try to find property named "Id"</span>
+        <span class="kw">if</span> (PrimaryKey == <span class="kw">null</span>)
+        {
+            PrimaryKey = properties.FirstOrDefault(p =>
+                p.PropertyName.Equals(<span class="str">"Id"</span>, <span class="tp">StringComparison</span>.OrdinalIgnoreCase));
+            <span class="kw">if</span> (PrimaryKey != <span class="kw">null</span>)
+            {
+                PrimaryKey.IsPrimaryKey = <span class="kw">true</span>;
+                PrimaryKey.IsAutoGenerated = <span class="kw">true</span>;
+            }
+        }
+    }
+
+    <span class="kw">public</span> <span class="tp">IEnumerable</span>&lt;<span class="tp">PropertyMetadata</span>&gt; GetInsertProperties() =>
+        MappedProperties.Where(p => !p.IsPrimaryKey || !p.IsAutoGenerated);
+
+    <span class="kw">public</span> <span class="tp">IEnumerable</span>&lt;<span class="tp">PropertyMetadata</span>&gt; GetUpdateProperties() =>
+        MappedProperties.Where(p => !p.IsPrimaryKey);
+}</code></pre>
+
+                <div class="info-box mentor">
+                    <h4>🧑‍🏫 Convention over Configuration</h4>
+                    <p>Notice how we try to find a property named "Id" if no [PrimaryKey] attribute is present. This is
+                        "convention over configuration" - if you follow naming conventions, you don't need explicit
+                        configuration. Entity Framework uses the same approach!</p>
+                </div>
+
+                <h5>Key Concepts Explained</h5>
+
+                <div class="line-explain">
+                    <strong>BindingFlags.Public | BindingFlags.Instance:</strong> These flags tell reflection WHAT to look for. <code>Public</code> = only public members, <code>Instance</code> = only instance members (not static). The <code>|</code> operator combines flags using bitwise OR.
+                </div>
+
+                <div class="line-explain">
+                    <strong>LINQ Method Chain:</strong> <code>.GetProperties().Where().Select().ToList()</code> - This chain filters and transforms data. <code>Where</code> filters, <code>Select</code> transforms (here, wrapping each PropertyInfo in PropertyMetadata), and <code>ToList</code> materializes the query.
+                </div>
+
+                <div class="line-explain">
+                    <strong>IReadOnlyList&lt;T&gt;:</strong> Exposes the collection as read-only to external code. Consumers can read elements but can't add or remove them. This is a good practice for public properties that shouldn't be modified externally.
+                </div>
+
+                <div class="line-explain">
+                    <strong>FirstOrDefault pattern:</strong> Returns the first matching element or <code>null</code> if none found. Useful when you're not sure if a match exists - avoids exceptions unlike <code>First()</code>.
+                </div>
+
+                <div class="line-explain">
+                    <strong>Expression-bodied methods:</strong> <code>GetInsertProperties() =></code> is shorthand for a method that returns a single expression. Cleaner than writing full method bodies with explicit return statements.
+                </div>
+
+
+                <h3 id="entity-mapper">4.5 EntityMapper.cs</h3>
+                <p class="file-path">MiniORM.Core/Core/EntityMapper.cs</p>
+
+                <span class="pattern-badge">Flyweight Pattern</span>
+                <span class="concept-badge">ConcurrentDictionary</span>
+
+                <div class="code-header"><span>EntityMapper.cs</span><span>114 lines</span></div>
+                <pre><code><span class="kw">using</span> <span class="tp">System.Collections.Concurrent</span>;
+<span class="kw">using</span> <span class="tp">System.Data</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core</span>;
+
+<span class="cm">/// Maps between database records and entity objects.</span>
+<span class="cm">/// Uses caching to avoid repeated reflection overhead.</span>
+<span class="kw">public static class</span> <span class="tp">EntityMapper</span>
+{
+    <span class="cm">// Thread-safe cache for entity metadata</span>
+    <span class="kw">private static readonly</span> <span class="tp">ConcurrentDictionary</span>&lt;<span class="tp">Type</span>, <span class="tp">EntityMetadata</span>&gt; _metadataCache
+        = <span class="kw">new</span>();
+
+    <span class="cm">/// Gets or creates metadata for an entity type.</span>
+    <span class="kw">public static</span> <span class="tp">EntityMetadata</span> GetMetadata&lt;<span class="tp">TEntity</span>&gt;() <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>
+        => GetMetadata(<span class="kw">typeof</span>(<span class="tp">TEntity</span>));
+
+    <span class="kw">public static</span> <span class="tp">EntityMetadata</span> GetMetadata(<span class="tp">Type</span> entityType)
+    {
+        <span class="cm">// GetOrAdd is atomic - ensures we only create metadata once per type</span>
+        <span class="kw">return</span> _metadataCache.GetOrAdd(entityType, type => <span class="kw">new</span> <span class="tp">EntityMetadata</span>(type));
+    }
+
+    <span class="cm">/// Maps a DataReader row to an entity instance.</span>
+    <span class="kw">public static</span> <span class="tp">TEntity</span> MapFromReader&lt;<span class="tp">TEntity</span>&gt;(<span class="tp">IDataReader</span> reader) 
+        <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>, <span class="kw">new</span>()
+    {
+        <span class="kw">var</span> metadata = GetMetadata&lt;<span class="tp">TEntity</span>&gt;();
+        <span class="kw">var</span> entity = <span class="kw">new</span> <span class="tp">TEntity</span>();
+
+        <span class="kw">foreach</span> (<span class="kw">var</span> property <span class="kw">in</span> metadata.MappedProperties)
+        {
+            <span class="kw">var</span> ordinal = reader.GetOrdinal(property.ColumnName);
+            <span class="kw">var</span> value = reader.IsDBNull(ordinal) ? <span class="kw">null</span> : reader.GetValue(ordinal);
+            property.SetValue(entity, value);
+        }
+
+        <span class="cm">// Set entity state to Unchanged (it came from database)</span>
+        <span class="kw">if</span> (entity <span class="kw">is</span> <span class="tp">EntityBase</span> entityBase)
+            entityBase.State = <span class="tp">EntityState</span>.Unchanged;
+
+        <span class="kw">return</span> entity;
+    }
+
+    <span class="kw">public static</span> <span class="tp">List</span>&lt;<span class="tp">TEntity</span>&gt; MapAllFromReader&lt;<span class="tp">TEntity</span>&gt;(<span class="tp">IDataReader</span> reader)
+        <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>, <span class="kw">new</span>()
+    {
+        <span class="kw">var</span> results = <span class="kw">new</span> <span class="tp">List</span>&lt;<span class="tp">TEntity</span>&gt;();
+        <span class="kw">while</span> (reader.Read())
+            results.Add(MapFromReader&lt;<span class="tp">TEntity</span>&gt;(reader));
+        <span class="kw">return</span> results;
+    }
+}</code></pre>
+
+                <div class="line-explain">
+                    <strong>ConcurrentDictionary.GetOrAdd():</strong> This is thread-safe and atomic. If multiple
+                    threads request the same type simultaneously, only one creates the metadata, and others reuse it.
+                    Perfect for caching!
+                </div>
+
+                <div class="line-explain">
+                    <strong>Generic constraint (where TEntity : class, new()):</strong> <code>class</code> means it must
+                    be a reference type, <code>new()</code> means it must have a parameterless constructor so we can
+                    create instances.
+                </div>
+
+                <div class="line-explain">
+                    <strong>Static class design:</strong> <code>public static class EntityMapper</code> - A static class cannot be instantiated. All members must be static. This is perfect for utility classes with no state that just provide services.
+                </div>
+
+                <div class="line-explain">
+                    <strong>IDataReader interface:</strong> This ADO.NET interface provides read-only, forward-only access to database query results. It's database-agnostic - works with SQLite, SQL Server, PostgreSQL, etc. Methods like <code>GetOrdinal()</code>, <code>IsDBNull()</code>, and <code>GetValue()</code> read column data.
+                </div>
+
+                <div class="line-explain">
+                    <strong>Pattern matching with 'is':</strong> <code>if (entity is EntityBase entityBase)</code> - This checks if <code>entity</code> is of type <code>EntityBase</code> AND casts it to a new variable <code>entityBase</code> in one step. Much cleaner than separate type checking and casting.
+                </div>
+
+                <div class="line-explain">
+                    <strong>Target-typed new():</strong> <code>= new();</code> - C# 9+ allows omitting the type when the compiler can infer it from the left side. It's equivalent to <code>= new List&lt;TEntity&gt;();</code> but more concise.
+                </div>
+                </section>
+
+
+                <!-- SECTION 5: DATABASE CONNECTION -->
+                <section id="connection" class="section">
+                    <h2>5. Database Connection Layer</h2>
+
+                    <span class="pattern-badge">Factory Pattern</span>
+                    <span class="pattern-badge">Singleton</span>
+                    <span class="pattern-badge">Facade</span>
+                    <span class="concept-badge">IDisposable</span>
+
+                    <p>This layer manages database connections, transactions, and query execution using ADO.NET.</p>
+
+                    <!-- IDbConnectionFactory -->
+                    <h3 id="conn-factory">5.1 IDbConnectionFactory.cs</h3>
+                    <p class="file-path">MiniORM.Core/Connection/IDbConnectionFactory.cs</p>
+
+                    <div class="code-header"><span>IDbConnectionFactory.cs</span><span>33 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">System.Data</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core.Connection</span>;
+
+<span class="cm">/// Factory interface for creating database connections.</span>
+<span class="cm">/// Design Pattern: Abstract Factory</span>
+<span class="kw">public interface</span> <span class="tp">IDbConnectionFactory</span>
+{
+    <span class="tp">IDbConnection</span> CreateConnection();
+    <span class="tp">IDbConnection</span> CreateOpenConnection();
+    <span class="tp">string</span> ConnectionString { <span class="kw">get</span>; }
+    <span class="tp">string</span> ProviderName { <span class="kw">get</span>; }
+}</code></pre>
+
+                    <div class="info-box">
+                        <h4>💡 Why an Interface?</h4>
+                        <p>This allows different implementations for different databases (SQLite, SQL Server,
+                            PostgreSQL) without changing the ORM code. You can swap <code>SqliteConnectionFactory</code>
+                            for <code>SqlServerConnectionFactory</code> and everything works!</p>
+                    </div>
+
+                    <!-- SqliteConnectionFactory -->
+                    <h3 id="sqlite-factory">5.2 SqliteConnectionFactory.cs</h3>
+                    <p class="file-path">MiniORM.Core/Connection/SqliteConnectionFactory.cs</p>
+
+                    <div class="code-header"><span>SqliteConnectionFactory.cs</span><span>43 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">System.Data</span>;
+<span class="kw">using</span> <span class="tp">Microsoft.Data.Sqlite</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core.Connection</span>;
+
+<span class="cm">/// SQLite connection factory implementation.</span>
+<span class="kw">public class</span> <span class="tp">SqliteConnectionFactory</span> : <span class="tp">IDbConnectionFactory</span>
+{
+    <span class="kw">public</span> <span class="tp">string</span> ConnectionString { <span class="kw">get</span>; }
+    <span class="kw">public</span> <span class="tp">string</span> ProviderName => <span class="str">"Microsoft.Data.Sqlite"</span>;
+
+    <span class="kw">public</span> <span class="tp">SqliteConnectionFactory</span>(<span class="tp">string</span> connectionString)
+    {
+        ConnectionString = connectionString
+            ?? <span class="kw">throw new</span> <span class="tp">ArgumentNullException</span>(<span class="kw">nameof</span>(connectionString));
+    }
+
+    <span class="cm">/// Creates an in-memory SQLite database - great for testing!</span>
+    <span class="kw">public static</span> <span class="tp">SqliteConnectionFactory</span> CreateInMemory()
+        => <span class="kw">new</span>(<span class="str">"Data Source=:memory:"</span>);
+
+    <span class="kw">public</span> <span class="tp">IDbConnection</span> CreateConnection()
+        => <span class="kw">new</span> <span class="tp">SqliteConnection</span>(ConnectionString);
+
+    <span class="kw">public</span> <span class="tp">IDbConnection</span> CreateOpenConnection()
+    {
+        <span class="kw">var</span> connection = CreateConnection();
+        connection.Open();
+        <span class="kw">return</span> connection;
+    }
+}</code></pre>
+
+                    <h5>Key Concepts Explained</h5>
+
+                    <div class="line-explain">
+                        <strong>Factory Method pattern:</strong> <code>CreateConnection()</code> and <code>CreateOpenConnection()</code> encapsulate object creation. Callers don't need to know which concrete type (<code>SqliteConnection</code>) is created - they just get an <code>IDbConnection</code>.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Static factory method:</strong> <code>CreateInMemory()</code> is a convenient alternative constructor. It's static so you don't need an instance to call it. Common pattern: <code>var factory = SqliteConnectionFactory.CreateInMemory();</code>
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>In-memory SQLite:</strong> <code>"Data Source=:memory:"</code> creates a database that lives only in RAM. Perfect for unit tests - fast, isolated, no cleanup needed. The database disappears when the connection closes.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Interface implementation:</strong> <code>: IDbConnectionFactory</code> means this class promises to implement all interface members. The compiler enforces this contract, and other code can work with the interface type abstractly.
+                    </div>
+
+                    <!-- DbContext -->
+                    <h3 id="db-context">5.3 DbContext.cs</h3>
+                    <p class="file-path">MiniORM.Core/Connection/DbContext.cs</p>
+
+                    <span class="pattern-badge">Singleton</span>
+                    <span class="pattern-badge">Facade</span>
+
+                    <div class="code-header"><span>DbContext.cs (Key Parts)</span><span>222 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">System.Data</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core</span>;
+
+<span class="cm">/// Database context - manages connections and provides gateway to database.</span>
+<span class="kw">public class</span> <span class="tp">DbContext</span> : <span class="tp">IDisposable</span>
+{
+    <span class="kw">private readonly</span> <span class="tp">IDbConnectionFactory</span> _connectionFactory;
+    <span class="kw">private</span> <span class="tp">IDbConnection</span>? _connection;
+    <span class="kw">private</span> <span class="tp">IDbTransaction</span>? _transaction;
+    <span class="kw">private</span> <span class="tp">bool</span> _disposed;
+
+    <span class="cm">// Static instance for Singleton pattern</span>
+    <span class="kw">private static</span> <span class="tp">DbContext</span>? _instance;
+    <span class="kw">private static readonly</span> <span class="tp">object</span> _lock = <span class="kw">new</span>();
+
+    <span class="kw">public</span> <span class="tp">DbContext</span>(<span class="tp">IDbConnectionFactory</span> connectionFactory)
+    {
+        _connectionFactory = connectionFactory
+            ?? <span class="kw">throw new</span> <span class="tp">ArgumentNullException</span>(<span class="kw">nameof</span>(connectionFactory));
+    }
+
+    <span class="cm">/// Thread-safe singleton using double-check locking.</span>
+    <span class="kw">public static</span> <span class="tp">DbContext</span> GetInstance(<span class="tp">IDbConnectionFactory</span> connectionFactory)
+    {
+        <span class="kw">if</span> (_instance == <span class="kw">null</span>)
+        {
+            <span class="kw">lock</span> (_lock)
+            {
+                <span class="kw">if</span> (_instance == <span class="kw">null</span>)
+                    _instance = <span class="kw">new</span> <span class="tp">DbContext</span>(connectionFactory);
+            }
+        }
+        <span class="kw">return</span> _instance;
+    }
+
+    <span class="kw">public</span> <span class="tp">IDbConnection</span> GetConnection()
+    {
+        <span class="kw">if</span> (_connection == <span class="kw">null</span>)
+            _connection = _connectionFactory.CreateConnection();
+        <span class="kw">if</span> (_connection.State != <span class="tp">ConnectionState</span>.Open)
+            _connection.Open();
+        <span class="kw">return</span> _connection;
+    }
+
+    <span class="kw">public</span> <span class="tp">IDbTransaction</span> BeginTransaction()
+    {
+        _transaction = GetConnection().BeginTransaction();
+        <span class="kw">return</span> _transaction;
+    }
+
+    <span class="cm">/// Executes a non-query SQL command.</span>
+    <span class="kw">public</span> <span class="tp">int</span> ExecuteNonQuery(<span class="tp">string</span> sql, <span class="kw">params</span> (<span class="tp">string</span> name, <span class="tp">object</span>? value)[] parameters)
+    {
+        <span class="kw">using var</span> command = CreateCommand();
+        command.CommandText = sql;
+        AddParameters(command, parameters);
+        <span class="kw">return</span> command.ExecuteNonQuery();
+    }
+
+    <span class="cm">/// Executes a scalar SQL command (returns single value).</span>
+    <span class="kw">public</span> <span class="tp">object</span>? ExecuteScalar(<span class="tp">string</span> sql, <span class="kw">params</span> (<span class="tp">string</span> name, <span class="tp">object</span>? value)[] parameters)
+    {
+        <span class="kw">using var</span> command = CreateCommand();
+        command.CommandText = sql;
+        AddParameters(command, parameters);
+        <span class="kw">return</span> command.ExecuteScalar();
+    }
+
+    <span class="cm">/// Executes a query and returns a data reader.</span>
+    <span class="kw">public</span> <span class="tp">IDataReader</span> ExecuteReader(<span class="tp">string</span> sql, <span class="kw">params</span> (<span class="tp">string</span> name, <span class="tp">object</span>? value)[] parameters)
+    {
+        <span class="kw">var</span> command = CreateCommand();
+        command.CommandText = sql;
+        AddParameters(command, parameters);
+        <span class="kw">return</span> command.ExecuteReader();
+    }
+
+    <span class="kw">public void</span> Dispose()
+    {
+        <span class="kw">if</span> (_disposed) <span class="kw">return</span>;
+        _transaction?.Dispose();
+        _connection?.Dispose();
+        _disposed = <span class="kw">true</span>;
+    }
+}</code></pre>
+
+                    <div class="line-explain">
+                        <strong>Double-check locking:</strong> The <code>if (_instance == null)</code> check happens
+                        twice - once without locking (fast path) and once inside the lock (thread-safe). This is an
+                        optimization for the singleton pattern in multi-threaded scenarios.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>params keyword:</strong> <code>params (string, object?)[]</code> allows calling the
+                        method with any number of parameter tuples:
+                        <code>ExecuteNonQuery(sql, ("@id", 1), ("@name", "John"))</code>
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>IDisposable pattern:</strong> <code>: IDisposable</code> indicates this class holds resources (database connection) that need cleanup. The <code>Dispose()</code> method releases these resources. Use with <code>using</code> statements to ensure cleanup happens.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>lock keyword:</strong> <code>lock (_lock)</code> ensures only one thread can execute the enclosed code at a time. The <code>_lock</code> object is just a synchronization target - any object works, but a dedicated private object avoids deadlock risks.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>ExecuteNonQuery vs ExecuteScalar vs ExecuteReader:</strong>
+                        <ul>
+                            <li><code>ExecuteNonQuery</code>: For INSERT/UPDATE/DELETE, returns affected row count</li>
+                            <li><code>ExecuteScalar</code>: Returns first column of first row (e.g., last inserted ID)</li>
+                            <li><code>ExecuteReader</code>: Returns a cursor to iterate through result rows</li>
+                        </ul>
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Disposal guard:</strong> <code>if (_disposed) return;</code> - Prevents disposing resources twice. Multiple Dispose calls should be harmless, so we check the flag and return early if already disposed.
+                    </div>
+                </section>
+
+                <!-- SECTION 6: QUERY BUILDING -->
+                <section id="query" class="section">
+                    <h2>6. Query Building (Builder Pattern)</h2>
+
+                    <span class="pattern-badge">Builder Pattern</span>
+                    <span class="pattern-badge">Fluent Interface</span>
+                    <span class="pattern-badge">Visitor Pattern</span>
+                    <span class="concept-badge">StringBuilder</span>
+                    <span class="concept-badge">Expression Trees</span>
+
+                    <!-- SqlQueryBuilder -->
+                    <h3 id="sql-builder">6.1 SqlQueryBuilder.cs</h3>
+                    <p class="file-path">MiniORM.Core/Query/SqlQueryBuilder.cs</p>
+
+                    <div class="code-header"><span>SqlQueryBuilder.cs (Key Methods)</span><span>395 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">System.Text</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core.Query</span>;
+
+<span class="cm">/// Builds SQL SELECT queries using Builder pattern with fluent interface.</span>
+<span class="kw">public class</span> <span class="tp">SqlQueryBuilder</span>
+{
+    <span class="kw">private readonly</span> <span class="tp">StringBuilder</span> _selectClause = <span class="kw">new</span>();
+    <span class="kw">private readonly</span> <span class="tp">StringBuilder</span> _fromClause = <span class="kw">new</span>();
+    <span class="kw">private readonly</span> <span class="tp">StringBuilder</span> _whereClause = <span class="kw">new</span>();
+    <span class="kw">private readonly</span> <span class="tp">List</span>&lt;<span class="tp">QueryParameter</span>&gt; _parameters = <span class="kw">new</span>();
+    <span class="kw">private</span> <span class="tp">int</span> _parameterIndex = <span class="num">0</span>;
+
+    <span class="cm">/// Selects specific columns from a typed entity.</span>
+    <span class="kw">public</span> <span class="tp">SqlQueryBuilder</span> Select&lt;<span class="tp">TEntity</span>&gt;() <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>
+    {
+        <span class="kw">var</span> metadata = <span class="tp">EntityMapper</span>.GetMetadata&lt;<span class="tp">TEntity</span>&gt;();
+        <span class="kw">var</span> columns = metadata.MappedProperties.Select(p => <span class="str">$"[{p.ColumnName}]"</span>);
+        _selectClause.Append(<span class="tp">string</span>.Join(<span class="str">", "</span>, columns));
+        <span class="kw">return this</span>;  <span class="cm">// ← Fluent interface: return this for chaining!</span>
+    }
+
+    <span class="kw">public</span> <span class="tp">SqlQueryBuilder</span> From&lt;<span class="tp">TEntity</span>&gt;() <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>
+    {
+        <span class="kw">var</span> metadata = <span class="tp">EntityMapper</span>.GetMetadata&lt;<span class="tp">TEntity</span>&gt;();
+        _fromClause.Append(<span class="str">$"[{metadata.TableName}]"</span>);
+        <span class="kw">return this</span>;
+    }
+
+    <span class="kw">public</span> <span class="tp">SqlQueryBuilder</span> Where(<span class="tp">string</span> column, <span class="tp">object</span>? value)
+    {
+        <span class="kw">var</span> paramName = AddParameter(value);
+        <span class="kw">if</span> (_whereClause.Length > <span class="num">0</span>) _whereClause.Append(<span class="str">" AND "</span>);
+        _whereClause.Append(<span class="str">$"([{column}] = {paramName})"</span>);
+        <span class="kw">return this</span>;
+    }
+
+    <span class="kw">public</span> <span class="tp">SqlQueryBuilder</span> Take(<span class="tp">int</span> count) { _take = count; <span class="kw">return this</span>; }
+    <span class="kw">public</span> <span class="tp">SqlQueryBuilder</span> Skip(<span class="tp">int</span> count) { _skip = count; <span class="kw">return this</span>; }
+
+    <span class="kw">public</span> <span class="tp">string</span> AddParameter(<span class="tp">object</span>? value)
+    {
+        <span class="kw">var</span> name = <span class="str">$"@p{_parameterIndex++}"</span>;
+        _parameters.Add(<span class="kw">new</span> <span class="tp">QueryParameter</span>(name, value));
+        <span class="kw">return</span> name;
+    }
+
+    <span class="kw">public</span> <span class="tp">string</span> Build()
+    {
+        <span class="kw">var</span> sql = <span class="kw">new</span> <span class="tp">StringBuilder</span>(<span class="str">"SELECT "</span>);
+        sql.Append(_selectClause.Length > <span class="num">0</span> ? _selectClause.ToString() : <span class="str">"*"</span>);
+        sql.Append(<span class="str">" FROM "</span>).Append(_fromClause);
+        <span class="kw">if</span> (_whereClause.Length > <span class="num">0</span>)
+            sql.Append(<span class="str">" WHERE "</span>).Append(_whereClause);
+        <span class="kw">return</span> sql.ToString();
+    }
+}</code></pre>
+
+                    <div class="info-box success">
+                        <h4>✅ Usage Example - Fluent Interface</h4>
+                        <pre><code><span class="kw">var</span> query = <span class="kw">new</span> <span class="tp">SqlQueryBuilder</span>()
+    .Select&lt;<span class="tp">Customer</span>&gt;()
+    .From&lt;<span class="tp">Customer</span>&gt;()
+    .Where(<span class="str">"IsActive"</span>, <span class="kw">true</span>)
+    .Take(<span class="num">10</span>)
+    .Build();
+<span class="cm">// Result: SELECT [Id], [CustomerName], ... FROM [Customers] WHERE ([IsActive] = @p0) LIMIT 10</span></code></pre>
+                    </div>
+
+                    <h5>Key Concepts Explained</h5>
+
+                    <div class="line-explain">
+                        <strong>StringBuilder for efficiency:</strong> Instead of concatenating strings with <code>+</code>, we use <code>StringBuilder</code>. String concatenation creates new string objects each time (strings are immutable), while StringBuilder modifies a single buffer. Essential for building SQL queries piece by piece.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Fluent Interface (<code>return this</code>):</strong> Each method returns <code>this</code>, allowing method chaining: <code>.Select().From().Where()</code>. This creates a readable, English-like syntax. The pattern is: modify state, then return self.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Parameterized queries (SQL injection prevention):</strong> Instead of embedding values in SQL (<code>WHERE Name = 'John'</code>), we use parameters (<code>WHERE Name = @p0</code>). The database engine handles escaping, making SQL injection attacks impossible. Never concatenate user input into SQL strings!
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Post-increment operator:</strong> <code>_parameterIndex++</code> returns the current value, THEN increments. So the first parameter is <code>@p0</code>, next is <code>@p1</code>, etc. This ensures unique parameter names.
+                    </div>
+
+                    <!-- ExpressionParser -->
+                    <h3 id="expr-parser">6.2 ExpressionParser.cs</h3>
+                    <p class="file-path">MiniORM.Core/Query/ExpressionParser.cs</p>
+
+                    <span class="pattern-badge">Visitor Pattern</span>
+                    <span class="pattern-badge">Interpreter Pattern</span>
+
+                    <div class="info-box mentor">
+                        <h4>🧑‍🏫 Expression Trees Explained</h4>
+                        <p>When you write <code>x => x.Name == "John"</code>, C# doesn't compile it to executable code -
+                            it creates a data structure (expression tree) that <em>represents</em> the code. We can then
+                            analyze this tree and convert it to SQL!</p>
+                    </div>
+
+                    <div class="code-header"><span>ExpressionParser.cs (Key Parts)</span><span>206 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">System.Linq.Expressions</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Core.Query</span>;
+
+<span class="cm">/// Parses LINQ expressions into SQL WHERE clauses.</span>
+<span class="kw">public class</span> <span class="tp">ExpressionParser</span>
+{
+    <span class="kw">private static readonly</span> <span class="tp">Dictionary</span>&lt;<span class="tp">ExpressionType</span>, <span class="tp">string</span>&gt; OperatorMap = <span class="kw">new</span>()
+    {
+        { <span class="tp">ExpressionType</span>.Equal, <span class="str">"="</span> },
+        { <span class="tp">ExpressionType</span>.NotEqual, <span class="str">"<>"</span> },
+        { <span class="tp">ExpressionType</span>.LessThan, <span class="str">"<"</span> },
+        { <span class="tp">ExpressionType</span>.GreaterThan, <span class="str">">"</span> },
+        { <span class="tp">ExpressionType</span>.AndAlso, <span class="str">"AND"</span> },
+        { <span class="tp">ExpressionType</span>.OrElse, <span class="str">"OR"</span> }
+    };
+
+    <span class="kw">public</span> <span class="tp">string</span> Parse&lt;<span class="tp">TEntity</span>&gt;(<span class="tp">Expression</span>&lt;<span class="tp">Func</span>&lt;<span class="tp">TEntity</span>, <span class="tp">bool</span>&gt;&gt; predicate, <span class="tp">SqlQueryBuilder</span> queryBuilder)
+    {
+        <span class="kw">return</span> Visit(predicate.Body);
+    }
+
+    <span class="kw">private</span> <span class="tp">string</span> Visit(<span class="tp">Expression</span> expression)
+    {
+        <span class="kw">return</span> expression <span class="kw">switch</span>
+        {
+            <span class="tp">BinaryExpression</span> binary => VisitBinary(binary),
+            <span class="tp">MemberExpression</span> member => VisitMember(member),
+            <span class="tp">ConstantExpression</span> constant => VisitConstant(constant),
+            <span class="tp">MethodCallExpression</span> methodCall => VisitMethodCall(methodCall),
+            _ => <span class="kw">throw new</span> <span class="tp">NotSupportedException</span>(<span class="str">$"..."</span>)
+        };
+    }
+
+    <span class="kw">private</span> <span class="tp">string</span> VisitBinary(<span class="tp">BinaryExpression</span> expr)
+    {
+        <span class="kw">var</span> left = Visit(expr.Left);
+        <span class="kw">var</span> right = GetValue(expr.Right);
+        <span class="kw">var</span> op = OperatorMap[expr.NodeType];
+        <span class="kw">return</span> <span class="str">$"{left} {op} @p{_paramIndex++}"</span>;
+    }
+
+    <span class="kw">private</span> <span class="tp">string</span> VisitMethodCall(<span class="tp">MethodCallExpression</span> expr)
+    {
+        <span class="cm">// Handle string.Contains → LIKE '%value%'</span>
+        <span class="kw">if</span> (expr.Method.Name == <span class="str">"Contains"</span>)
+        {
+            <span class="kw">var</span> column = Visit(expr.Object);
+            <span class="kw">var</span> value = EvaluateExpression(expr.Arguments[<span class="num">0</span>]);
+            <span class="kw">return</span> <span class="str">$"{column} LIKE '%{value}%'"</span>;
+        }
+        <span class="cm">// ... more methods</span>
+    }
+}</code></pre>
+
+                    <div class="line-explain">
+                        <strong>Switch expression:</strong> The new C# switch expression syntax is perfect for the
+                        Visitor pattern. Each case returns a value, making the code more concise than traditional switch
+                        statements.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Expression&lt;Func&lt;T, bool&gt;&gt; vs Func&lt;T, bool&gt;:</strong> A <code>Func</code> is compiled code that executes. An <code>Expression</code> is a data structure describing the code. We need the Expression so we can analyze it and convert it to SQL. The compiler builds the expression tree for us!
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Visitor Pattern in action:</strong> The <code>Visit()</code> method recursively walks the expression tree. Each node type (Binary, Member, Constant) has its own handler. This separates the tree structure from the operations performed on it.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Dictionary&lt;ExpressionType, string&gt;:</strong> Maps C# operators to SQL operators. <code>ExpressionType.Equal</code> → <code>"="</code>, <code>ExpressionType.AndAlso</code> → <code>"AND"</code>. The dictionary lookup is O(1) and cleaner than a giant switch statement.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Method call translation:</strong> <code>string.Contains("John")</code> becomes <code>LIKE '%John%'</code>. <code>string.StartsWith("J")</code> becomes <code>LIKE 'J%'</code>. This allows writing natural C# expressions that translate to SQL.
+                    </div>
+                </section>
+
+                <!-- SECTION 7: REPOSITORY -->
+                <section id="repository" class="section">
+                    <h2>7. Repository Pattern</h2>
+
+                    <span class="pattern-badge">Repository Pattern</span>
+                    <span class="concept-badge">Generic Interfaces</span>
+
+                    <div class="code-header"><span>IRepository.cs + Repository.cs (Key Parts)</span></div>
+                    <pre><code><span class="cm">// IRepository.cs</span>
+<span class="kw">public interface</span> <span class="tp">IRepository</span>&lt;<span class="tp">TEntity</span>, <span class="tp">TKey</span>&gt; <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>
+{
+    <span class="tp">TEntity</span>? GetById(<span class="tp">TKey</span> id);
+    <span class="tp">IEnumerable</span>&lt;<span class="tp">TEntity</span>&gt; GetAll();
+    <span class="tp">IEnumerable</span>&lt;<span class="tp">TEntity</span>&gt; Find(<span class="tp">Expression</span>&lt;<span class="tp">Func</span>&lt;<span class="tp">TEntity</span>, <span class="tp">bool</span>&gt;&gt; predicate);
+    <span class="tp">TEntity</span> Add(<span class="tp">TEntity</span> entity);
+    <span class="kw">void</span> Update(<span class="tp">TEntity</span> entity);
+    <span class="kw">void</span> Delete(<span class="tp">TEntity</span> entity);
+}
+
+<span class="cm">// Repository.cs</span>
+<span class="kw">public class</span> <span class="tp">Repository</span>&lt;<span class="tp">TEntity</span>, <span class="tp">TKey</span>&gt; : <span class="tp">IRepository</span>&lt;<span class="tp">TEntity</span>, <span class="tp">TKey</span>&gt;
+    <span class="kw">where</span> <span class="tp">TEntity</span> : <span class="kw">class</span>, <span class="kw">new</span>()
+{
+    <span class="kw">protected readonly</span> <span class="tp">DbContext</span> Context;
+    <span class="kw">protected readonly</span> <span class="tp">EntityMetadata</span> Metadata;
+
+    <span class="kw">public virtual</span> <span class="tp">TEntity</span>? GetById(<span class="tp">TKey</span> id)
+    {
+        <span class="kw">var</span> query = <span class="kw">new</span> <span class="tp">SqlQueryBuilder</span>()
+            .Select&lt;<span class="tp">TEntity</span>&gt;()
+            .From&lt;<span class="tp">TEntity</span>&gt;()
+            .Where(Metadata.PrimaryKey!.ColumnName, id);
+
+        <span class="kw">using var</span> reader = Context.ExecuteReader(query.Build(), query.GetParameterTuples());
+        <span class="kw">if</span> (reader.Read())
+            <span class="kw">return</span> <span class="tp">EntityMapper</span>.MapFromReader&lt;<span class="tp">TEntity</span>&gt;(reader);
+        <span class="kw">return null</span>;
+    }
+
+    <span class="kw">public virtual</span> <span class="tp">TEntity</span> Add(<span class="tp">TEntity</span> entity)
+    {
+        <span class="kw">var</span> insertQuery = <span class="kw">new</span> <span class="tp">InsertQueryBuilder</span>()
+            .Into&lt;<span class="tp">TEntity</span>&gt;()
+            .Values(entity);
+
+        <span class="kw">var</span> id = Context.ExecuteScalar(insertQuery.Build(), insertQuery.GetParameterTuples());
+        
+        <span class="cm">// Set the generated ID on the entity</span>
+        <span class="kw">if</span> (id != <span class="kw">null</span> && Metadata.PrimaryKey!.IsAutoGenerated)
+            Metadata.PrimaryKey.SetValue(entity, <span class="tp">Convert</span>.ChangeType(id, Metadata.PrimaryKey.PropertyType));
+        
+        <span class="kw">return</span> entity;
+    }
+}</code></pre>
+
+                    <h5>Key Concepts Explained</h5>
+
+                    <div class="line-explain">
+                        <strong>Generic interface with two type parameters:</strong> <code>IRepository&lt;TEntity, TKey&gt;</code> - <code>TEntity</code> is the entity type (Customer), <code>TKey</code> is the primary key type (int, Guid). This single interface works for all entities!
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Expression parameter for Find:</strong> <code>Expression&lt;Func&lt;TEntity, bool&gt;&gt; predicate</code> - Accepts a lambda like <code>c => c.IsActive</code>. Using Expression instead of Func allows us to translate the condition to SQL rather than loading all data and filtering in memory.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>virtual keyword:</strong> <code>public virtual TEntity? GetById</code> - Allows derived classes to override this method. You could create a <code>CachingRepository</code> that overrides GetById to check cache first.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>using var declaration:</strong> <code>using var reader = ...</code> - C# 8+ simplified using. The reader is automatically disposed when it goes out of scope (end of method). Equivalent to a using block but cleaner.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Convert.ChangeType:</strong> Database returns the new ID as object. We need to convert it to the correct type (int, long, etc.) before setting it via reflection. This handles type mismatches gracefully.
+                    </div>
+                </section>
+
+                <!-- SECTION 8: UNIT OF WORK -->
+                <section id="uow" class="section">
+                    <h2>8. Unit of Work Pattern</h2>
+
+                    <span class="pattern-badge">Unit of Work</span>
+                    <span class="pattern-badge">Observer Pattern</span>
+
+                    <div class="info-box">
+                        <h4>💡 What is Unit of Work?</h4>
+                        <p>Unit of Work keeps track of all changes made to entities during a business transaction, and
+                            coordinates writing those changes to the database as a single unit. This ensures either ALL
+                            changes succeed, or NONE do (atomicity).</p>
+                    </div>
+
+                    <div class="code-header"><span>UnitOfWork.cs + ChangeTracker.cs (Key Parts)</span></div>
+                    <pre><code><span class="cm">// ChangeTracker.cs - Tracks entity state using Observer pattern</span>
+<span class="kw">public class</span> <span class="tp">ChangeTracker</span>
+{
+    <span class="kw">private readonly</span> <span class="tp">Dictionary</span>&lt;<span class="tp">object</span>, <span class="tp">EntityEntry</span>&gt; _trackedEntities = <span class="kw">new</span>();
+
+    <span class="kw">public</span> <span class="tp">EntityEntry</span> Track&lt;<span class="tp">TEntity</span>&gt;(<span class="tp">TEntity</span> entity, <span class="tp">EntityState</span> state)
+    {
+        <span class="kw">var</span> entry = <span class="kw">new</span> <span class="tp">EntityEntry</span>(entity, state);
+        _trackedEntities[entity] = entry;
+        
+        <span class="cm">// Subscribe to property changes (Observer pattern)</span>
+        <span class="kw">if</span> (entity <span class="kw">is</span> <span class="tp">INotifyPropertyChanged</span> notifyPropertyChanged)
+            notifyPropertyChanged.PropertyChanged += OnEntityPropertyChanged;
+        
+        <span class="kw">return</span> entry;
+    }
+}
+
+<span class="cm">// UnitOfWork.cs - Coordinates repositories and transactions</span>
+<span class="kw">public class</span> <span class="tp">UnitOfWork</span> : <span class="tp">IUnitOfWork</span>
+{
+    <span class="kw">private readonly</span> <span class="tp">DbContext</span> _context;
+    <span class="kw">private readonly</span> <span class="tp">Dictionary</span>&lt;<span class="tp">Type</span>, <span class="tp">object</span>&gt; _repositories = <span class="kw">new</span>();
+    <span class="kw">public</span> <span class="tp">ChangeTracker</span> ChangeTracker { <span class="kw">get</span>; } = <span class="kw">new</span>();
+
+    <span class="kw">public</span> <span class="tp">IRepository</span>&lt;<span class="tp">TEntity</span>&gt; Repository&lt;<span class="tp">TEntity</span>&gt;()
+    {
+        <span class="kw">var</span> type = <span class="kw">typeof</span>(<span class="tp">TEntity</span>);
+        <span class="kw">if</span> (!_repositories.TryGetValue(type, <span class="kw">out var</span> repo))
+        {
+            repo = <span class="kw">new</span> <span class="tp">TrackedRepository</span>&lt;<span class="tp">TEntity</span>&gt;(_context, ChangeTracker);
+            _repositories[type] = repo;
+        }
+        <span class="kw">return</span> (<span class="tp">IRepository</span>&lt;<span class="tp">TEntity</span>&gt;)repo;
+    }
+
+    <span class="kw">public</span> <span class="tp">int</span> SaveChanges()
+    {
+        ChangeTracker.DetectChanges();
+        <span class="kw">var</span> changedEntries = ChangeTracker.GetChangedEntries();
+        <span class="kw">var</span> affectedRows = <span class="num">0</span>;
+
+        <span class="kw">foreach</span> (<span class="kw">var</span> entry <span class="kw">in</span> changedEntries)
+        {
+            <span class="kw">switch</span> (entry.State)
+            {
+                <span class="kw">case</span> <span class="tp">EntityState</span>.Added: affectedRows += InsertEntity(entry); <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="tp">EntityState</span>.Modified: affectedRows += UpdateEntity(entry); <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="tp">EntityState</span>.Deleted: affectedRows += DeleteEntity(entry); <span class="kw">break</span>;
+            }
+        }
+        ChangeTracker.AcceptAllChanges();
+        <span class="kw">return</span> affectedRows;
+    }
+}</code></pre>
+
+                    <h5>Key Concepts Explained</h5>
+
+                    <div class="line-explain">
+                        <strong>Repository caching:</strong> <code>Dictionary&lt;Type, object&gt; _repositories</code> - Creates each repository once and reuses it. When you call <code>Repository&lt;Customer&gt;()</code> multiple times, you get the same instance. This ensures all operations share the same change tracker.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>TryGetValue pattern:</strong> <code>if (!_repositories.TryGetValue(type, out var repo))</code> - Checks if key exists AND gets the value in a single operation. More efficient than checking ContainsKey then accessing by key. The <code>out var</code> declares the variable inline.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Observer pattern subscription:</strong> <code>notifyPropertyChanged.PropertyChanged += OnEntityPropertyChanged</code> - The change tracker subscribes to each entity's PropertyChanged event. When any property changes, the tracker is automatically notified and updates the entity's state.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>SaveChanges flow:</strong>
+                        <ol>
+                            <li><code>DetectChanges()</code> - Scans tracked entities for state changes</li>
+                            <li><code>GetChangedEntries()</code> - Gets entities with Added/Modified/Deleted state</li>
+                            <li>Switch on state - Generates appropriate INSERT/UPDATE/DELETE SQL</li>
+                            <li><code>AcceptAllChanges()</code> - Resets all entities to Unchanged state</li>
+                        </ol>
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>EntityEntry pattern:</strong> Wraps an entity with its tracking metadata (original values, current state). This is the same pattern Entity Framework Core uses. It allows the change tracker to work with entities abstractly without knowing their concrete types.
+                    </div>
+                </section>
+
+                <!-- SECTION 9: DEMO APPLICATION -->
+                <section id="demo" class="section">
+                    <h2>9. Demo Application</h2>
+
+                    <p>Now let's see everything working together with sample entities and a complete demo program.</p>
+
+                    <h3>9.1 Customer Entity</h3>
+                    <p class="file-path">MiniORM.Demo/Entities/Customer.cs</p>
+
+                    <div class="code-header"><span>Customer.cs</span><span>54 lines</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">MiniORM.Core</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.Attributes</span>;
+
+<span class="kw">namespace</span> <span class="tp">MiniORM.Demo.Entities</span>;
+
+[<span class="attr">Table</span>(<span class="str">"Customers"</span>)]
+<span class="kw">public class</span> <span class="tp">Customer</span> : <span class="tp">EntityBase</span>
+{
+    <span class="kw">private</span> <span class="tp">int</span> _id;
+    <span class="kw">private</span> <span class="tp">string</span> _name = <span class="str">""</span>;
+    <span class="kw">private</span> <span class="tp">string</span> _email = <span class="str">""</span>;
+    <span class="kw">private</span> <span class="tp">bool</span> _isActive;
+
+    [<span class="attr">PrimaryKey</span>(AutoGenerate = <span class="kw">true</span>)]
+    <span class="kw">public</span> <span class="tp">int</span> Id
+    {
+        <span class="kw">get</span> => _id;
+        <span class="kw">set</span> => SetProperty(<span class="kw">ref</span> _id, value);
+    }
+
+    [<span class="attr">Column</span>(<span class="str">"CustomerName"</span>, MaxLength = <span class="num">100</span>)]
+    <span class="kw">public</span> <span class="tp">string</span> Name
+    {
+        <span class="kw">get</span> => _name;
+        <span class="kw">set</span> => SetProperty(<span class="kw">ref</span> _name, value);
+    }
+
+    <span class="kw">public</span> <span class="tp">string</span> Email
+    {
+        <span class="kw">get</span> => _email;
+        <span class="kw">set</span> => SetProperty(<span class="kw">ref</span> _email, value);
+    }
+
+    <span class="kw">public</span> <span class="tp">bool</span> IsActive
+    {
+        <span class="kw">get</span> => _isActive;
+        <span class="kw">set</span> => SetProperty(<span class="kw">ref</span> _isActive, value);
+    }
+
+    [<span class="attr">NotMapped</span>]
+    <span class="kw">public</span> <span class="tp">string</span> DisplayName => <span class="str">$"{Name} <{Email}>"</span>;
+}</code></pre>
+
+                    <h3>9.2 Demo Program</h3>
+                    <p class="file-path">MiniORM.Demo/Program.cs</p>
+
+                    <div class="code-header"><span>Program.cs (Key Demos)</span></div>
+                    <pre><code><span class="kw">using</span> <span class="tp">MiniORM.Core</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.Connection</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.Repository</span>;
+<span class="kw">using</span> <span class="tp">MiniORM.Core.UnitOfWork</span>;
+
+<span class="cm">// Create in-memory SQLite database</span>
+<span class="kw">var</span> connectionFactory = <span class="tp">SqliteConnectionFactory</span>.CreateInMemory();
+<span class="kw">using var</span> context = <span class="kw">new</span> <span class="tp">DbContext</span>(connectionFactory);
+
+<span class="cm">// Create table</span>
+context.ExecuteNonQuery(<span class="str">@"
+    CREATE TABLE Customers (
+        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CustomerName TEXT NOT NULL,
+        Email TEXT NOT NULL,
+        IsActive INTEGER NOT NULL
+    )"</span>);
+
+<span class="cm">// ═══ Demo 1: Basic Repository Pattern ═══</span>
+<span class="kw">var</span> repo = <span class="kw">new</span> <span class="tp">Repository</span>&lt;<span class="tp">Customer</span>&gt;(context);
+
+<span class="kw">var</span> customer = <span class="kw">new</span> <span class="tp">Customer</span>
+{
+    Name = <span class="str">"John Doe"</span>,
+    Email = <span class="str">"john@example.com"</span>,
+    IsActive = <span class="kw">true</span>
+};
+repo.Add(customer);
+<span class="tp">Console</span>.WriteLine(<span class="str">$"Inserted customer with ID: {customer.Id}"</span>);
+
+<span class="cm">// ═══ Demo 2: LINQ-like Queries ═══</span>
+<span class="kw">var</span> activeCustomers = repo.Find(c => c.IsActive == <span class="kw">true</span>);
+<span class="kw">var</span> searchResults = repo.Find(c => c.Name.Contains(<span class="str">"John"</span>));
+
+<span class="cm">// ═══ Demo 3: Unit of Work with Change Tracking ═══</span>
+<span class="kw">using var</span> unitOfWork = <span class="kw">new</span> <span class="tp">UnitOfWork</span>(context);
+<span class="kw">var</span> customerRepo = unitOfWork.Repository&lt;<span class="tp">Customer</span>&gt;();
+
+<span class="kw">var</span> john = customerRepo.FirstOrDefault(c => c.Name == <span class="str">"John Doe"</span>);
+john!.Email = <span class="str">"john.doe@newmail.com"</span>;  <span class="cm">// Automatically tracked!</span>
+unitOfWork.SaveChanges();  <span class="cm">// Persists the change</span></code></pre>
+
+                    <div class="info-box success">
+                        <h4>🎉 You've Built a Complete ORM!</h4>
+                        <p>Run with <code>dotnet run --project MiniORM.Demo</code> to see all demos in action!</p>
+                    </div>
+
+                    <h5>Demo Highlights</h5>
+
+                    <div class="line-explain">
+                        <strong>In-memory SQLite:</strong> <code>SqliteConnectionFactory.CreateInMemory()</code> - Perfect for demos and tests. Creates a fresh database that lives only during execution. No files to manage, no cleanup needed.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Attributes in practice:</strong> Notice how the Customer entity uses <code>[Table]</code>, <code>[PrimaryKey]</code>, <code>[Column]</code>, and <code>[NotMapped]</code>. The ORM reads these at runtime to generate correct SQL without any manual mapping code.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Automatic change tracking:</strong> <code>john.Email = "..."</code> - Just changing the property is enough! The entity's PropertyChanged event fires, which the ChangeTracker captures. No need to explicitly mark entities as modified.
+                    </div>
+
+                    <div class="line-explain">
+                        <strong>Null-forgiving operator:</strong> <code>john!.Email</code> - The <code>!</code> tells the compiler "trust me, this isn't null." Use carefully - it suppresses the warning but doesn't prevent NullReferenceException at runtime.
+                    </div>
+                </section>
+
+                <!-- SECTION 10: SUMMARY -->
+                <section id="summary" class="section">
+                    <h2>10. Summary & Next Steps</h2>
+
+                    <div class="info-box mentor">
+                        <h4>🎓 What You've Learned</h4>
+                        <p>Congratulations! You've built a fully functional ORM from scratch. Here's a recap of the key concepts and patterns you've mastered:</p>
+                    </div>
+
+                    <h3>Design Patterns Implemented</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Pattern</th><th>Where Used</th><th>Why It Matters</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Metadata</td><td>Attributes</td><td>Declarative configuration without code</td></tr>
+                            <tr><td>Builder</td><td>Query Builders</td><td>Construct complex objects step-by-step</td></tr>
+                            <tr><td>Factory</td><td>ConnectionFactory</td><td>Encapsulate object creation</td></tr>
+                            <tr><td>Singleton</td><td>DbContext</td><td>Single shared instance</td></tr>
+                            <tr><td>Repository</td><td>Repository classes</td><td>Abstract data access</td></tr>
+                            <tr><td>Unit of Work</td><td>UnitOfWork</td><td>Transaction coordination</td></tr>
+                            <tr><td>Observer</td><td>Change Tracker</td><td>Automatic notifications</td></tr>
+                            <tr><td>Visitor</td><td>ExpressionParser</td><td>Traverse complex structures</td></tr>
+                            <tr><td>Flyweight</td><td>EntityMetadata</td><td>Share expensive objects</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>C# Concepts Practiced</h3>
+                    <ul>
+                        <li><strong>Reflection</strong> - Runtime type inspection and manipulation</li>
+                        <li><strong>Custom Attributes</strong> - Declarative metadata</li>
+                        <li><strong>Expression Trees</strong> - Code as data for LINQ-to-SQL translation</li>
+                        <li><strong>Generics</strong> - Type-safe, reusable components</li>
+                        <li><strong>IDisposable</strong> - Proper resource management</li>
+                        <li><strong>Events &amp; Delegates</strong> - Observer pattern implementation</li>
+                        <li><strong>LINQ</strong> - Fluent data querying</li>
+                        <li><strong>Nullable Reference Types</strong> - Compile-time null safety</li>
+                    </ul>
+
+                    <h3>Next Steps</h3>
+                    <div class="info-box">
+                        <h4>🚀 Extend Your ORM</h4>
+                        <ul>
+                            <li><strong>Add async/await</strong> - Implement async versions of all database operations</li>
+                            <li><strong>Support more databases</strong> - Add SQL Server or PostgreSQL connection factories</li>
+                            <li><strong>Implement lazy loading</strong> - Load related entities on demand</li>
+                            <li><strong>Add migrations</strong> - Track and apply database schema changes</li>
+                            <li><strong>Write unit tests</strong> - Test each component in isolation</li>
+                        </ul>
+                    </div>
+
+                    <p style="font-size: 1.2rem; margin-top: 2rem; text-align: center;">
+                        <strong>Happy coding! 🎉</strong>
+                    </p>
+                </section>
+        </div>
+    </div>
+
+    <a href="#intro" class="back-to-top" title="Back to top">↑</a>
+
+    <script>
+        // Back to top button visibility
+        const backToTop = document.querySelector('.back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.style.opacity = '1';
+            } else {
+                backToTop.style.opacity = '0';
+            }
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

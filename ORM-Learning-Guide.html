@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building a Simple ORM in C# - Complete Learning Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #7c3aed;
+            --accent-color: #10b981;
+            --bg-dark: #1e293b;
+            --bg-darker: #0f172a;
+            --bg-light: #f8fafc;
+            --text-dark: #0f172a;
+            --text-light: #e2e8f0;
+            --code-bg: #1e1e1e;
+            --border-color: #e2e8f0;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-light);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .metadata-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .metadata-item strong {
+            color: var(--accent-color);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 2rem 1.5rem;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+            color: var(--accent-color);
+        }
+
+        .sidebar a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .content {
+            padding: 3rem;
+            max-width: 900px;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 20px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        .section h3 {
+            color: var(--secondary-color);
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+        }
+
+        .section h4 {
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .pattern-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left-color: var(--warning-color);
+        }
+
+        .info-box.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left-color: var(--accent-color);
+        }
+
+        .info-box h4 {
+            margin-top: 0;
+            color: var(--text-dark);
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #333;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        p code, li code {
+            background: #f1f5f9;
+            color: var(--danger-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .architecture-diagram {
+            background: var(--bg-darker);
+            color: var(--text-light);
+            padding: 2rem;
+            border-radius: 12px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 2px solid var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--bg-light);
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .back-to-top:hover {
+            background: var(--secondary-color);
+            transform: translateY(-5px);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                max-height: none;
+            }
+
+            .content {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        .keyword-csharp {
+            color: #569cd6;
+        }
+
+        .keyword-type {
+            color: #4ec9b0;
+        }
+
+        .keyword-string {
+            color: #ce9178;
+        }
+
+        .keyword-comment {
+            color: #6a9955;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Building a Simple ORM in C#</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">A Complete Step-by-Step Learning Guide</p>
+            <p>Master C# by implementing your own Object-Relational Mapper from scratch, covering essential concepts and design patterns.</p>
+            
+            <div class="metadata">
+                <div class="metadata-item">
+                    <strong>Model:</strong> Claude Opus 4.5
+                </div>
+                <div class="metadata-item">
+                    <strong>Created:</strong> Dec 4, 2025
+                </div>
+                <div class="metadata-item">
+                    <strong>Tokens:</strong> 72,685
+                </div>
+                <div class="metadata-item">
+                    <strong>Status:</strong> ⭐ Starred
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h2>📚 Table of Contents</h2>
+                <ul>
+                    <li><a href="#overview">Overview & Architecture</a></li>
+                    <li><a href="#setup">Project Setup</a></li>
+                    <li><a href="#attributes">Custom Attributes</a></li>
+                    <li><a href="#entity-base">Entity Base Class</a></li>
+                    <li><a href="#mapper">Reflection-Based Mapper</a></li>
+                    <li><a href="#connection">Database Connection Manager</a></li>
+                    <li><a href="#query-builder">SQL Query Builder</a></li>
+                    <li><a href="#repository">Generic Repository</a></li>
+                    <li><a href="#unit-of-work">Unit of Work</a></li>
+                    <li><a href="#expression-parser">Expression Parser</a></li>
+                    <li><a href="#complete-example">Complete Example</a></li>
+                    <li><a href="#patterns">Design Patterns Summary</a></li>
+                </ul>
+            </aside>
+
+            <main class="content">
+                <!-- Overview Section -->
+                <section id="overview" class="section">
+                    <h2>1. Overview & Architecture</h2>
+                    
+                    <h3>What is an ORM?</h3>
+                    <p>An <strong>Object-Relational Mapper (ORM)</strong> bridges the gap between object-oriented programming and relational databases by:</p>
+                    
+                    <ul>
+                        <li>Mapping classes to database tables</li>
+                        <li>Mapping properties to columns</li>
+                        <li>Converting objects to SQL and vice versa</li>
+                        <li>Managing database connections and transactions</li>
+                        <li>Providing CRUD operations with type safety</li>
+                    </ul>
+
+                    <div class="info-box success">
+                        <h4>🎯 Learning Objectives</h4>
+                        <p>By building this ORM, you'll master:</p>
+                        <ul>
+                            <li>Advanced C# features (reflection, attributes, expressions)</li>
+                            <li>10+ essential design patterns</li>
+                            <li>Database programming with ADO.NET</li>
+                            <li>LINQ and expression trees</li>
+                            <li>Software architecture principles</li>
+                        </ul>
+                    </div>
+
+                    <h3>Architecture Diagram</h3>
+                    <div class="architecture-diagram">┌─────────────────────────────────────────────────────────────────┐
+│                        Application Layer                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
+│  │   Entity    │    │  Repository │    │    Unit of Work     │  │
+│  │   Classes   │    │   Pattern   │    │      Pattern        │  │
+│  └──────┬──────┘    └──────┬──────┘    └──────────┬──────────┘  │
+│         │                  │                      │             │
+│         ▼                  ▼                      ▼             │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                      ORM Core                               ││
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   ││
+│  │  │  Attributes  │  │   Mapper     │  │  Query Builder   │   ││
+│  │  │  (Metadata)  │  │ (Reflection) │  │    (Builder)     │   ││
+│  │  └──────────────┘  └──────────────┘  └──────────────────┘   ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              │                                  │
+│                              ▼                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              Database Connection Manager                    ││
+│  │                    (Singleton Pattern)                      ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              │                                  │
+└──────────────────────────────┼──────────────────────────────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │   SQL Database      │
+                    │ (SQL Server/SQLite) │
+                    └─────────────────────┘</div>
+                </section>
+
+                <!-- Project Setup -->
+                <section id="setup" class="section">
+                    <h2>2. Project Setup</h2>
+                    
+                    <h3>Create the Solution Structure</h3>
+                    <pre><code># Create solution
+dotnet new sln -n MiniORM
+
+# Create projects
+dotnet new classlib -n MiniORM.Core
+dotnet new console -n MiniORM.Demo
+
+# Add to solution
+dotnet sln add MiniORM.Core
+dotnet sln add MiniORM.Demo
+
+# Add reference
+dotnet add MiniORM.Demo reference MiniORM.Core
+
+# Add required packages
+cd MiniORM.Core
+dotnet add package Microsoft.Data.SqlClient
+dotnet add package System.Data.SQLite</code></pre>
+
+                    <h3>Project Structure</h3>
+                    <pre><code>MiniORM/
+├── MiniORM.Core/
+│   ├── Attributes/
+│   │   ├── TableAttribute.cs
+│   │   ├── ColumnAttribute.cs
+│   │   ├── PrimaryKeyAttribute.cs
+│   │   ├── ForeignKeyAttribute.cs
+│   │   └── NotMappedAttribute.cs
+│   ├── Core/
+│   │   ├── EntityBase.cs
+│   │   ├── EntityMapper.cs
+│   │   └── EntityMetadata.cs
+│   ├── Connection/
+│   │   ├── IDbConnectionFactory.cs
+│   │   ├── DbConnectionFactory.cs
+│   │   └── DbContext.cs
+│   ├── Query/
+│   │   ├── SqlQueryBuilder.cs
+│   │   ├── InsertQueryBuilder.cs
+│   │   ├── UpdateQueryBuilder.cs
+│   │   ├── DeleteQueryBuilder.cs
+│   │   └── ExpressionParser.cs
+│   ├── Repository/
+│   │   ├── IRepository.cs
+│   │   └── Repository.cs
+│   └── UnitOfWork/
+│       ├── IUnitOfWork.cs
+│       ├── UnitOfWork.cs
+│       └── ChangeTracker.cs
+└── MiniORM.Demo/
+    └── Program.cs</code></pre>
+                </section>
+
+                <!-- Design Patterns Summary -->
+                <section id="patterns" class="section">
+                    <h2>Design Patterns Used</h2>
+                    
+                    <div class="info-box">
+                        <h4>10 Major Patterns Implemented</h4>
+                        <p>This ORM implementation demonstrates professional software architecture through multiple design patterns:</p>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pattern</th>
+                                <th>Component</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="pattern-badge">Metadata</span></td>
+                                <td>Attributes</td>
+                                <td>Attach mapping information declaratively</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Builder</span></td>
+                                <td>Query Builders</td>
+                                <td>Construct complex SQL with fluent API</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Repository</span></td>
+                                <td>Repository</td>
+                                <td>Centralize data access logic</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Unit of Work</span></td>
+                                <td>UnitOfWork</td>
+                                <td>Coordinate transactions</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Singleton</span></td>
+                                <td>DbContext</td>
+                                <td>Manage single connection instance</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Factory</span></td>
+                                <td>ConnectionFactory</td>
+                                <td>Create database connections</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Visitor</span></td>
+                                <td>Expression Parser</td>
+                                <td>Parse expression trees to SQL</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Observer</span></td>
+                                <td>Change Tracking</td>
+                                <td>Track entity state changes</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Flyweight</span></td>
+                                <td>Metadata Cache</td>
+                                <td>Reuse metadata instances</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pattern-badge">Template Method</span></td>
+                                <td>EntityBase</td>
+                                <td>Common entity behavior skeleton</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Custom Attributes -->
+                <section id="attributes" class="section">
+                    <h2>3. Custom Attributes (Metadata Pattern)</h2>
+                    
+                    <span class="pattern-badge">Metadata Pattern</span>
+                    <span class="pattern-badge">Decorator Pattern</span>
+
+                    <div class="info-box">
+                        <h4>Why Use Attributes?</h4>
+                        <ul>
+                            <li>Declarative way to define mappings</li>
+                            <li>Keeps mapping close to entity definition</li>
+                            <li>Clean separation of concerns</li>
+                            <li>Read at runtime using reflection</li>
+                        </ul>
+                    </div>
+
+                    <h3>TableAttribute.cs</h3>
+                    <pre><code>using System;
+
+namespace MiniORM.Core.Attributes
+{
+    /// &lt;summary&gt;
+    /// Maps a class to a database table.
+    /// &lt;/summary&gt;
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public class TableAttribute : Attribute
+    {
+        public string Name { get; }
+        public string Schema { get; set; } = "dbo";
+
+        public TableAttribute(string name)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+        }
+
+        public string FullTableName => string.IsNullOrEmpty(Schema) 
+            ? $"[{Name}]" 
+            : $"[{Schema}].[{Name}]";
+    }
+}</code></pre>
+
+                    <h3>ColumnAttribute.cs</h3>
+                    <pre><code>using System;
+
+namespace MiniORM.Core.Attributes
+{
+    [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
+    public class ColumnAttribute : Attribute
+    {
+        public string Name { get; }
+        public string DbType { get; set; }
+        public bool IsNullable { get; set; } = true;
+        public int MaxLength { get; set; } = -1;
+
+        public ColumnAttribute() { }
+        public ColumnAttribute(string name) { Name = name; }
+    }
+}</code></pre>
+
+                    <h3>PrimaryKeyAttribute.cs</h3>
+                    <pre><code>using System;
+
+namespace MiniORM.Core.Attributes
+{
+    [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
+    public class PrimaryKeyAttribute : Attribute
+    {
+        public bool AutoGenerate { get; set; } = true;
+        public string SequenceName { get; set; }
+    }
+}</code></pre>
+
+                    <h3>Usage Example</h3>
+                    <pre><code>[Table("Customers")]
+public class Customer : EntityBase
+{
+    [PrimaryKey(AutoGenerate = true)]
+    public int Id { get; set; }
+    
+    [Column("CustomerName", MaxLength = 100)]
+    public string Name { get; set; }
+    
+    public string Email { get; set; }
+    
+    [NotMapped]
+    public string DisplayName => $"{Name} ({Email})";
+}</code></pre>
+                </section>
+
+                <!-- Entity Base Class -->
+                <section id="entity-base" class="section">
+                    <h2>4. Entity Base Class</h2>
+                    
+                    <span class="pattern-badge">Template Method Pattern</span>
+                    <span class="pattern-badge">Observer Pattern</span>
+
+                    <p>The <code>EntityBase</code> class implements <code>INotifyPropertyChanged</code> for automatic change tracking:</p>
+
+                    <pre><code>using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using MiniORM.Core.Attributes;
+
+namespace MiniORM.Core
+{
+    public abstract class EntityBase : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotMapped]
+        public EntityState State { get; internal set; } = EntityState.Detached;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            
+            if (State == EntityState.Unchanged)
+            {
+                State = EntityState.Modified;
+            }
+        }
+
+        protected bool SetProperty&lt;T&gt;(ref T field, T value, 
+            [CallerMemberName] string propertyName = null)
+        {
+            if (EqualityComparer&lt;T&gt;.Default.Equals(field, value))
+                return false;
+
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+    }
+
+    public enum EntityState
+    {
+        Detached,
+        Unchanged,
+        Added,
+        Modified,
+        Deleted
+    }
+}</code></pre>
+
+                    <div class="info-box">
+                        <h4>Key Features</h4>
+                        <ul>
+                            <li><strong>Change Tracking:</strong> Automatically marks entities as modified when properties change</li>
+                            <li><strong>CallerMemberName:</strong> Automatically captures property name without magic strings</li>
+                            <li><strong>SetProperty Helper:</strong> Reduces boilerplate in property setters</li>
+                            <li><strong>Entity State:</strong> Tracks whether entity is new, modified, or deleted</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Reflection-Based Mapper -->
+                <section id="mapper" class="section">
+                    <h2>5. Reflection-Based Mapper</h2>
+                    
+                    <span class="pattern-badge">Flyweight Pattern</span>
+                    <span class="pattern-badge">Object Pool</span>
+
+                    <p>Uses reflection to read metadata and cache it for performance:</p>
+
+                    <h3>EntityMetadata.cs</h3>
+                    <pre><code>using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace MiniORM.Core
+{
+    public class EntityMetadata
+    {
+        public Type EntityType { get; }
+        public string TableName { get; }
+        public string Schema { get; }
+        public string FullTableName { get; }
+        public PropertyMetadata PrimaryKey { get; }
+        public IReadOnlyList&lt;PropertyMetadata&gt; Properties { get; }
+        public IReadOnlyList&lt;PropertyMetadata&gt; MappedProperties { get; }
+
+        public EntityMetadata(Type entityType)
+        {
+            // Read attributes and populate metadata
+            // Cache property information
+            // Validate primary key exists
+        }
+
+        public IEnumerable&lt;PropertyMetadata&gt; GetInsertProperties()
+        {
+            return MappedProperties.Where(p =&gt; 
+                !p.IsPrimaryKey || !p.IsAutoGenerated);
+        }
+
+        public IEnumerable&lt;PropertyMetadata&gt; GetUpdateProperties()
+        {
+            return MappedProperties.Where(p =&gt; !p.IsPrimaryKey);
+        }
+    }
+}</code></pre>
+
+                    <h3>EntityMapper.cs</h3>
+                    <pre><code>using System.Collections.Concurrent;
+
+namespace MiniORM.Core
+{
+    public static class EntityMapper
+    {
+        private static readonly ConcurrentDictionary&lt;Type, EntityMetadata&gt; _metadataCache 
+            = new ConcurrentDictionary&lt;Type, EntityMetadata&gt;();
+
+        public static EntityMetadata GetMetadata&lt;TEntity&gt;() where TEntity : class
+        {
+            return _metadataCache.GetOrAdd(typeof(TEntity), 
+                type =&gt; new EntityMetadata(type));
+        }
+
+        public static TEntity MapFromReader&lt;TEntity&gt;(IDataReader reader) 
+            where TEntity : class, new()
+        {
+            // Map columns to properties
+            // Handle type conversions
+            // Set entity state
+        }
+    }
+}</code></pre>
+
+                    <div class="info-box warning">
+                        <h4>⚡ Performance Optimization</h4>
+                        <p>Reflection is expensive! The Flyweight pattern caches metadata so reflection only happens once per entity type, dramatically improving performance.</p>
+                    </div>
+                </section>
+
+                <!-- Database Connection Manager -->
+                <section id="connection" class="section">
+                    <h2>6. Database Connection Manager</h2>
+                    
+                    <span class="pattern-badge">Singleton Pattern</span>
+                    <span class="pattern-badge">Factory Pattern</span>
+                    <span class="pattern-badge">Facade Pattern</span>
+
+                    <h3>IDbConnectionFactory.cs</h3>
+                    <pre><code>using System.Data;
+
+namespace MiniORM.Core.Connection
+{
+    public interface IDbConnectionFactory
+    {
+        IDbConnection CreateConnection();
+        IDbConnection CreateOpenConnection();
+        string ConnectionString { get; }
+        string ProviderName { get; }
+    }
+}</code></pre>
+
+                    <h3>DbContext.cs</h3>
+                    <pre><code>using System;
+using System.Data;
+
+namespace MiniORM.Core
+{
+    public class DbContext : IDisposable
+    {
+        private readonly IDbConnectionFactory _connectionFactory;
+        private IDbConnection _connection;
+        private IDbTransaction _transaction;
+
+        public DbContext(IDbConnectionFactory connectionFactory)
+        {
+            _connectionFactory = connectionFactory;
+        }
+
+        public IDbConnection GetConnection()
+        {
+            if (_connection == null)
+                _connection = _connectionFactory.CreateConnection();
+
+            if (_connection.State != ConnectionState.Open)
+                _connection.Open();
+
+            return _connection;
+        }
+
+        public IDbTransaction BeginTransaction()
+        {
+            _transaction = GetConnection().BeginTransaction();
+            return _transaction;
+        }
+
+        public void Commit()
+        {
+            _transaction?.Commit();
+            _transaction?.Dispose();
+            _transaction = null;
+        }
+
+        public void Rollback()
+        {
+            _transaction?.Rollback();
+            _transaction?.Dispose();
+            _transaction = null;
+        }
+
+        public void Dispose()
+        {
+            _transaction?.Dispose();
+            _connection?.Dispose();
+        }
+    }
+}</code></pre>
+                </section>
+
+                <!-- SQL Query Builder -->
+                <section id="query-builder" class="section">
+                    <h2>7. SQL Query Builder</h2>
+                    
+                    <span class="pattern-badge">Builder Pattern</span>
+                    <span class="pattern-badge">Fluent Interface</span>
+
+                    <p>Provides a fluent API for constructing SQL queries step by step:</p>
+
+                    <h3>SqlQueryBuilder.cs</h3>
+                    <pre><code>namespace MiniORM.Core.Query
+{
+    public class SqlQueryBuilder
+    {
+        private readonly StringBuilder _selectClause = new StringBuilder();
+        private readonly StringBuilder _fromClause = new StringBuilder();
+        private readonly StringBuilder _whereClause = new StringBuilder();
+        private readonly List&lt;QueryParameter&gt; _parameters = new List&lt;QueryParameter&gt;();
+
+        public SqlQueryBuilder Select(params string[] columns)
+        {
+            _selectClause.Append(string.Join(", ", columns.Select(c =&gt; $"[{c}]")));
+            return this;
+        }
+
+        public SqlQueryBuilder From&lt;TEntity&gt;(string alias = null) where TEntity : class
+        {
+            var metadata = EntityMapper.GetMetadata&lt;TEntity&gt;();
+            _fromClause.Append($"[{metadata.TableName}]");
+            if (!string.IsNullOrEmpty(alias))
+                _fromClause.Append($" AS [{alias}]");
+            return this;
+        }
+
+        public SqlQueryBuilder Where(string column, object value)
+        {
+            var paramName = AddParameter(value);
+            if (_whereClause.Length &gt; 0)
+                _whereClause.Append(" AND ");
+            _whereClause.Append($"[{column}] = {paramName}");
+            return this;
+        }
+
+        public SqlQueryBuilder OrderBy(string column, bool descending = false)
+        {
+            // Build ORDER BY clause
+            return this;
+        }
+
+        public string BuildSelect()
+        {
+            var sql = new StringBuilder("SELECT ");
+            sql.Append(_selectClause.Length &gt; 0 ? _selectClause : "*");
+            sql.Append(" FROM ");
+            sql.Append(_fromClause);
+            
+            if (_whereClause.Length &gt; 0)
+            {
+                sql.Append(" WHERE ");
+                sql.Append(_whereClause);
+            }
+            
+            return sql.ToString();
+        }
+    }
+}</code></pre>
+
+                    <h3>Usage Example</h3>
+                    <pre><code>var query = new SqlQueryBuilder()
+    .Select&lt;Customer&gt;()
+    .From&lt;Customer&gt;()
+    .Where("Name", "John")
+    .Where("Email", "john@example.com")
+    .OrderBy("CreatedDate", descending: true)
+    .Top(10);
+
+string sql = query.BuildSelect();
+// Result: SELECT [Id], [Name], [Email] FROM [Customers] 
+//         WHERE [Name] = @p0 AND [Email] = @p1 
+//         ORDER BY [CreatedDate] DESC</code></pre>
+                </section>
+
+                <!-- Generic Repository -->
+                <section id="repository" class="section">
+                    <h2>8. Generic Repository</h2>
+                    
+                    <span class="pattern-badge">Repository Pattern</span>
+
+                    <div class="info-box">
+                        <h4>Benefits of Repository Pattern</h4>
+                        <ul>
+                            <li>Centralizes data access logic</li>
+                            <li>Makes code more testable (can mock)</li>
+                            <li>Reduces duplication</li>
+                            <li>Provides clean API for CRUD operations</li>
+                        </ul>
+                    </div>
+
+                    <h3>IRepository.cs</h3>
+                    <pre><code>using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+
+namespace MiniORM.Core.Repository
+{
+    public interface IRepository&lt;TEntity, TKey&gt; where TEntity : class
+    {
+        // Query Operations
+        TEntity GetById(TKey id);
+        IEnumerable&lt;TEntity&gt; GetAll();
+        IEnumerable&lt;TEntity&gt; Find(Expression&lt;Func&lt;TEntity, bool&gt;&gt; predicate);
+        TEntity FirstOrDefault(Expression&lt;Func&lt;TEntity, bool&gt;&gt; predicate);
+        bool Any(Expression&lt;Func&lt;TEntity, bool&gt;&gt; predicate);
+        int Count(Expression&lt;Func&lt;TEntity, bool&gt;&gt; predicate = null);
+
+        // Command Operations
+        TEntity Add(TEntity entity);
+        void Update(TEntity entity);
+        void Delete(TEntity entity);
+        void Delete(TKey id);
+    }
+
+    public interface IRepository&lt;TEntity&gt; : IRepository&lt;TEntity, int&gt; 
+        where TEntity : class
+    {
+    }
+}</code></pre>
+
+                    <h3>Usage Example</h3>
+                    <pre><code>// Create repository
+var repository = new Repository&lt;Customer&gt;(context);
+
+// Query
+var customer = repository.GetById(1);
+var allCustomers = repository.GetAll();
+var filtered = repository.Find(c =&gt; c.Name.Contains("John"));
+
+// Insert
+var newCustomer = new Customer { Name = "John Doe", Email = "john@example.com" };
+repository.Add(newCustomer);
+
+// Update
+customer.Email = "newemail@example.com";
+repository.Update(customer);
+
+// Delete
+repository.Delete(customer);</code></pre>
+                </section>
+
+                <!-- Unit of Work -->
+                <section id="unit-of-work" class="section">
+                    <h2>9. Unit of Work Pattern</h2>
+                    
+                    <span class="pattern-badge">Unit of Work Pattern</span>
+                    <span class="pattern-badge">Registry Pattern</span>
+
+                    <p>Coordinates changes across multiple repositories and manages transactions:</p>
+
+                    <h3>IUnitOfWork.cs</h3>
+                    <pre><code>namespace MiniORM.Core.UnitOfWork
+{
+    public interface IUnitOfWork : IDisposable
+    {
+        IRepository&lt;TEntity&gt; Repository&lt;TEntity&gt;() where TEntity : class, new();
+        
+        int SaveChanges();
+        Task&lt;int&gt; SaveChangesAsync();
+        
+        void BeginTransaction();
+        void Commit();
+        void Rollback();
+    }
+}</code></pre>
+
+                    <h3>ChangeTracker.cs</h3>
+                    <pre><code>namespace MiniORM.Core.UnitOfWork
+{
+    public class ChangeTracker
+    {
+        private readonly Dictionary&lt;object, EntityEntry&gt; _trackedEntities;
+
+        public EntityEntry Track&lt;TEntity&gt;(TEntity entity, EntityState state)
+        {
+            // Track entity and subscribe to property changes
+            // Return entry with original and current values
+        }
+
+        public IEnumerable&lt;EntityEntry&gt; GetChangedEntries()
+        {
+            return _trackedEntities.Values.Where(e =&gt; 
+                e.State == EntityState.Added ||
+                e.State == EntityState.Modified ||
+                e.State == EntityState.Deleted);
+        }
+
+        public void AcceptAllChanges()
+        {
+            // Mark all as unchanged after successful save
+        }
+
+        public void DetectChanges()
+        {
+            // Compare current vs original values
+        }
+    }
+}</code></pre>
+
+                    <h3>Usage Example</h3>
+                    <pre><code>using var unitOfWork = new UnitOfWork(context);
+
+// Work with multiple repositories
+var customerRepo = unitOfWork.Repository&lt;Customer&gt;();
+var orderRepo = unitOfWork.Repository&lt;Order&gt;();
+
+// Make changes
+var customer = customerRepo.GetById(1);
+customer.Email = "newemail@example.com";
+
+var order = new Order { CustomerId = 1, Total = 100 };
+orderRepo.Add(order);
+
+// Save all changes in one transaction
+unitOfWork.SaveChanges();</code></pre>
+                </section>
+
+                <!-- Expression Parser -->
+                <section id="expression-parser" class="section">
+                    <h2>10. Expression Parser for LINQ-like Queries</h2>
+                    
+                    <span class="pattern-badge">Visitor Pattern</span>
+                    <span class="pattern-badge">Interpreter Pattern</span>
+
+                    <p>Parses C# expression trees into SQL WHERE clauses to enable LINQ-style queries:</p>
+
+                    <h3>ExpressionParser.cs</h3>
+                    <pre><code>namespace MiniORM.Core.Query
+{
+    public class ExpressionParser
+    {
+        private SqlQueryBuilder _queryBuilder;
+        private Dictionary&lt;ExpressionType, string&gt; _operatorMap;
+
+        public string ParsePredicate&lt;TEntity&gt;(
+            Expression&lt;Func&lt;TEntity, bool&gt;&gt; predicate, 
+            SqlQueryBuilder queryBuilder) where TEntity : class
+        {
+            _queryBuilder = queryBuilder;
+            return Visit(predicate.Body);
+        }
+
+        private string Visit(Expression expression)
+        {
+            return expression switch
+            {
+                BinaryExpression binary =&gt; VisitBinary(binary),
+                MemberExpression member =&gt; VisitMember(member),
+                ConstantExpression constant =&gt; VisitConstant(constant),
+                MethodCallExpression methodCall =&gt; VisitMethodCall(methodCall),
+                _ =&gt; throw new NotSupportedException()
+            };
+        }
+
+        private string VisitBinary(BinaryExpression expression)
+        {
+            // Handle ==, !=, &lt;, &gt;, &amp;&amp;, || etc.
+            var left = Visit(expression.Left);
+            var right = Visit(expression.Right);
+            var op = _operatorMap[expression.NodeType];
+            return $"{left} {op} {right}";
+        }
+
+        private string VisitMethodCall(MethodCallExpression expression)
+        {
+            // Handle Contains, StartsWith, EndsWith
+            if (expression.Method.Name == "Contains")
+            {
+                var column = Visit(expression.Object);
+                var value = EvaluateExpression(expression.Arguments[0]);
+                var param = _queryBuilder.AddParameter($"%{value}%");
+                return $"{column} LIKE {param}";
+            }
+            // ... more method handlers
+        }
+    }
+}</code></pre>
+
+                    <h3>Supported LINQ Expressions</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>C# Expression</th>
+                                <th>SQL Output</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>x => x.Name == "John"</code></td>
+                                <td><code>[Name] = @p0</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>x => x.Age > 18</code></td>
+                                <td><code>[Age] > @p0</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>x => x.Name.Contains("Jo")</code></td>
+                                <td><code>[Name] LIKE '%Jo%'</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>x => x.Email.StartsWith("a")</code></td>
+                                <td><code>[Email] LIKE 'a%'</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>x => x.Active && x.Age > 21</code></td>
+                                <td><code>([Active] = 1) AND ([Age] > @p0)</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Complete Example -->
+                <section id="complete-example" class="section">
+                    <h2>11. Complete Example</h2>
+
+                    <h3>Define Entities</h3>
+                    <pre><code>[Table("Customers")]
+public class Customer : EntityBase
+{
+    [PrimaryKey(AutoGenerate = true)]
+    public int Id { get; set; }
+    
+    private string _name;
+    public string Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+    
+    private string _email;
+    public string Email
+    {
+        get => _email;
+        set => SetProperty(ref _email, value);
+    }
+    
+    [NotMapped]
+    public string DisplayName => $"{Name} &lt;{Email}&gt;";
+}</code></pre>
+
+                    <h3>Setup and Usage</h3>
+                    <pre><code>// Setup
+var connectionString = "Server=.;Database=MyDb;Trusted_Connection=True;";
+var connectionFactory = new SqlConnectionFactory(connectionString);
+var context = new DbContext(connectionFactory);
+var unitOfWork = new UnitOfWork(context);
+
+// Get repository
+var customerRepo = unitOfWork.Repository&lt;Customer&gt;();
+
+// Query
+var allCustomers = customerRepo.GetAll();
+var johns = customerRepo.Find(c => c.Name.Contains("John"));
+var customer = customerRepo.FirstOrDefault(c => c.Id == 1);
+
+// Insert
+var newCustomer = new Customer 
+{ 
+    Name = "Jane Doe", 
+    Email = "jane@example.com" 
+};
+customerRepo.Add(newCustomer);
+
+// Update
+customer.Email = "newemail@example.com";
+customerRepo.Update(customer);
+
+// Delete
+customerRepo.Delete(5);
+
+// Save all changes
+unitOfWork.SaveChanges();
+
+// Transaction example
+unitOfWork.BeginTransaction();
+try
+{
+    customerRepo.Add(new Customer { Name = "Test", Email = "test@test.com" });
+    unitOfWork.SaveChanges();
+    unitOfWork.Commit();
+}
+catch
+{
+    unitOfWork.Rollback();
+    throw;
+}</code></pre>
+
+                    <div class="info-box success">
+                        <h4>🎉 Congratulations!</h4>
+                        <p>You now have a fully functional ORM with:</p>
+                        <ul>
+                            <li>✅ Attribute-based mapping</li>
+                            <li>✅ CRUD operations</li>
+                            <li>✅ LINQ-like queries</li>
+                            <li>✅ Change tracking</li>
+                            <li>✅ Transaction support</li>
+                            <li>✅ Multiple design patterns</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Next Steps</h2>
+
+                    <div class="info-box warning">
+                        <h4>🚀 Enhancement Ideas</h4>
+                        <ol>
+                            <li>Add async/await support throughout</li>
+                            <li>Implement lazy loading for related entities</li>
+                            <li>Add caching layer to reduce database calls</li>
+                            <li>Support complex relationships (one-to-many, many-to-many)</li>
+                            <li>Add migration support for schema changes</li>
+                            <li>Better LINQ provider with full IQueryable</li>
+                            <li>Support multiple databases (PostgreSQL, MySQL)</li>
+                            <li>Object pooling for connections</li>
+                            <li>Optimistic concurrency with row versioning</li>
+                            <li>Logging and diagnostics</li>
+                        </ol>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>📚 Further Learning</h4>
+                        <ul>
+                            <li><strong>Entity Framework Core</strong> - Study Microsoft's official ORM</li>
+                            <li><strong>Dapper</strong> - Micro-ORM for inspiration</li>
+                            <li><strong>C# Language Specification</strong> - Deep dive into expressions and reflection</li>
+                            <li><strong>Design Patterns</strong> - Gang of Four book</li>
+                        </ul>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <a href="#" class="back-to-top" id="backToTop">↑</a>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Update active state
+                    document.querySelectorAll('.sidebar a').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Highlight active section in sidebar
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.sidebar a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 60) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
