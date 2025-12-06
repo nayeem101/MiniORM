@@ -1,17 +1,6 @@
 # C# ORM Implementation Guide
 
-This document is extracted from a conversation with Claude 4.5 Opus about implementing a simple ORM for SQL databases in C#.
-
-**Conversation ID**: 6931ca6f00f33e8394f49977  
-**Title**: C# ORM Implementation Guide  
-**Created**: 2025-12-04T17:52:47.618Z  
-**Last Updated**: 2025-12-05T06:05:12.961Z
-
----
-
-## Original Request
-
-"Help me learn C# by implementing a simple ORM for SQL dbs. Step by step in detail with the explanations of design patterns used in the implementation."
+This document is about implementing a simple ORM for SQL databases in C#.
 
 ---
 
