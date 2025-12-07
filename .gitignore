@@ -1,0 +1,25 @@
+
+# Visual Studio / .NET
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# Build results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.nupkg
+
+# Temporary/Large files
+response.json
+*.log
